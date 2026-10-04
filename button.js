@@ -484,67 +484,33 @@ window.addEventListener('resize', () => {
   /* =========================
    5. 프로필 사진 후광 효과
    ========================= */
-
 /* =========================
-   5. 회전하는 프로필 오로라
+   5. 프로필 오로라 + 시선 추적
    ========================= */
 
-const profileImg = document.querySelector('[data-name="profileImg"]');
+// 현재 오로라 상태
+let profileAuraEnabled = true;
 
-if (profileImg && !document.querySelector('#profile-aura')) {
+// 현재 마우스 위치
+let profileCursorX = window.innerWidth / 2;
+let profileCursorY = window.innerHeight / 2;
 
-  const aura = document.createElement('div');
-  aura.id = 'profile-aura';
+// 현재 / 목표 회전값
+let currentRotateX = 0;
+let currentRotateY = 0;
 
-  // 프로필 사진을 감싸는 부모 기준
-  const parent = profileImg.parentElement;
-
-  if (parent) {
-
-    parent.style.position = 'relative';
-
-    Object.assign(aura.style, {
-      position: 'absolute',
-
-      // 사진보다 약간 크게
-      width: `${profileImg.offsetWidth + 18}px`,
-      height: `${profileImg.offsetHeight + 18}px`,
-
-      left: `${profileImg.offsetLeft - 9}px`,
-      top: `${profileImg.offsetTop - 9}px`,
-
-      borderRadius: '50%',
-
-      background: `
-        conic-gradient(
-          from 0deg,
-          #60a5fa,
-          #8b5cf6,
-          #ec4899,
-          #f472b6,
-          #8b5cf6,
-          #60a5fa
-        )
-      `,
-
-      filter: 'blur(8px)',
-      opacity: '0.65',
-
-      zIndex: '0',
-      pointerEvents: 'none'
-    });
-
-    profileImg.style.position = 'relative';
-    profileImg.style.zIndex = '1';
-    profileImg.style.borderRadius = '50%';
-
-    parent.insertBefore(aura, profileImg);
+let targetRotateX = 0;
+let targetRotateY = 0;
 
 
-    // 애니메이션 CSS
-    const style = document.createElement('style');
+// =========================
+// CSS
+// =========================
 
-style.textContent = `
+const profileEffectStyle = document.createElement('style');
+
+profileEffectStyle.textContent = `
+
   @keyframes profileAuraSpin {
     0% {
       transform: rotate(0deg) scale(1);
@@ -562,117 +528,418 @@ style.textContent = `
     }
   }
 
+
   #profile-aura {
     animation:
       profileAuraSpin
       5s
       linear
       infinite;
+
+    transition:
+      opacity .35s ease,
+      filter .35s ease;
+
+    pointer-events: none;
   }
-`;
-    document.head.appendChild(style);
+
+
+  #profile-aura.aura-off {
+    opacity: 0 !important;
+    animation-play-state: paused;
   }
-}
-  /* =========================
-   프로필 사진 / 응원문구 클릭 이동 막기
-   ========================= */
 
-document.addEventListener('click', e => {
-  const target = e.target.closest(
-    '[data-name="profileImg"], [data-name="my_word"]'
-  );
 
-  if (!target) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-}, true);
-  /* =========================
-   프로필 사진 3D 틸트 효과
-   ========================= */
-
-const tiltStyle = document.createElement('style');
-
-tiltStyle.textContent = `
   [data-name="profileImg"] {
     transform-style: preserve-3d;
-    transition:
-      transform .15s ease-out,
-      filter .2s ease-out;
     will-change: transform;
+    border-radius: 50% !important;
+
+    /*
+      JS에서 매 프레임 transform을 조절하므로
+      transform transition은 넣지 않음
+    */
+    transition:
+      filter .25s ease;
+
+    /*
+      이제 클릭하면 오로라가 켜지고 꺼지므로
+      클릭 가능한 표시
+    */
+    cursor: pointer !important;
   }
+
 
   [data-name="profileImg"]:hover {
     filter:
-      brightness(1.05)
-      drop-shadow(0 8px 12px rgba(0,0,0,.18));
+      brightness(1.04)
+      drop-shadow(
+        0 7px 10px
+        rgba(0, 0, 0, .16)
+      );
   }
+
+
+  [data-name="my_word"] {
+    cursor: default !important;
+  }
+
 `;
 
-document.head.appendChild(tiltStyle);
+document.head.appendChild(profileEffectStyle);
 
 
-// 마우스가 프사 위에서 움직일 때
-document.addEventListener('mousemove', e => {
+// =========================
+// 오로라 생성 / 복구
+// =========================
 
-  const img = e.target.closest(
-    '[data-name="profileImg"]'
+function ensureProfileAura() {
+
+  const profileImg =
+    document.querySelector(
+      '[data-name="profileImg"]'
+    );
+
+  if (!profileImg) return null;
+
+
+  const parent =
+    profileImg.parentElement;
+
+  if (!parent) return null;
+
+
+  parent.style.position = 'relative';
+
+  profileImg.style.position = 'relative';
+  profileImg.style.zIndex = '2';
+
+
+  let aura =
+    document.querySelector(
+      '#profile-aura'
+    );
+
+
+  // 오로라가 사라졌으면 다시 생성
+  if (!aura) {
+
+    aura =
+      document.createElement('div');
+
+    aura.id = 'profile-aura';
+
+
+    Object.assign(aura.style, {
+      position: 'absolute',
+
+      borderRadius: '50%',
+
+      background: `
+        conic-gradient(
+          from 0deg,
+          #60a5fa,
+          #8b5cf6,
+          #ec4899,
+          #f472b6,
+          #8b5cf6,
+          #60a5fa
+        )
+      `,
+
+      filter: 'blur(8px)',
+
+      zIndex: '1',
+
+      pointerEvents: 'none'
+    });
+
+
+    parent.insertBefore(
+      aura,
+      profileImg
+    );
+  }
+
+
+  // 현재 프로필 사진 크기와 위치에 맞춤
+  const extra = 9;
+
+  aura.style.width =
+    `${profileImg.offsetWidth + extra * 2}px`;
+
+  aura.style.height =
+    `${profileImg.offsetHeight + extra * 2}px`;
+
+  aura.style.left =
+    `${profileImg.offsetLeft - extra}px`;
+
+  aura.style.top =
+    `${profileImg.offsetTop - extra}px`;
+
+
+  // 현재 ON/OFF 상태 적용
+  aura.classList.toggle(
+    'aura-off',
+    !profileAuraEnabled
   );
 
-  if (!img) return;
 
-  const rect = img.getBoundingClientRect();
-
-  // 사진 중심 기준 -1 ~ 1
-  const x =
-    (e.clientX - rect.left) / rect.width - 0.5;
-
-  const y =
-    (e.clientY - rect.top) / rect.height - 0.5;
+  return {
+    profileImg,
+    aura
+  };
+}
 
 
-  // 기울기 강도
-  const maxRotate = 12;
-
-  const rotateY =
-    x * maxRotate * 2;
-
-  const rotateX =
-    -y * maxRotate * 2;
+// 처음 생성
+ensureProfileAura();
 
 
-  img.style.transform = `
-    perspective(500px)
-    rotateX(${rotateX}deg)
-    rotateY(${rotateY}deg)
-    translateZ(8px)
-    scale(1.04)
-  `;
-});
+// DOM 재렌더링 등에 대비해 복구
+setInterval(
+  ensureProfileAura,
+  1000
+);
 
 
-// 프사에서 마우스가 빠져나가면 원위치
-document.addEventListener('mouseout', e => {
+// =========================
+// 화면 어디에 있든 마우스 위치 추적
+// =========================
 
-  const img = e.target.closest(
-    '[data-name="profileImg"]'
+document.addEventListener(
+  'mousemove',
+  e => {
+
+    profileCursorX = e.clientX;
+    profileCursorY = e.clientY;
+
+  },
+  {
+    passive: true
+  }
+);
+
+
+// =========================
+// 프로필이 마우스를 바라보게 만들기
+// =========================
+
+function animateProfileLook() {
+
+  const profileImg =
+    document.querySelector(
+      '[data-name="profileImg"]'
+    );
+
+
+  if (profileImg) {
+
+    const rect =
+      profileImg.getBoundingClientRect();
+
+
+    const centerX =
+      rect.left +
+      rect.width / 2;
+
+    const centerY =
+      rect.top +
+      rect.height / 2;
+
+
+    /*
+     * 프사 중심에서
+     * 마우스가 어느 방향에 있는지 계산
+     */
+    const dx =
+      profileCursorX - centerX;
+
+    const dy =
+      profileCursorY - centerY;
+
+
+    /*
+     * 화면 크기로 나눠서
+     * -1 ~ 1 정도의 값으로 변환
+     */
+    const normalizedX =
+      dx /
+      (window.innerWidth / 2);
+
+    const normalizedY =
+      dy /
+      (window.innerHeight / 2);
+
+
+    /*
+     * 최대 기울기
+     *
+     * 너무 크면 얼굴이 많이 돌아가므로
+     * 8~10 정도가 자연스러움
+     */
+    const maxRotate = 9;
+
+
+    targetRotateY =
+      Math.max(
+        -maxRotate,
+        Math.min(
+          maxRotate,
+          normalizedX *
+          maxRotate
+        )
+      );
+
+
+    targetRotateX =
+      Math.max(
+        -maxRotate,
+        Math.min(
+          maxRotate,
+          -normalizedY *
+          maxRotate
+        )
+      );
+
+
+    /*
+     * 현재값 → 목표값으로
+     * 서서히 따라가게 함
+     */
+    const smooth = 0.07;
+
+    currentRotateX +=
+      (
+        targetRotateX -
+        currentRotateX
+      ) * smooth;
+
+    currentRotateY +=
+      (
+        targetRotateY -
+        currentRotateY
+      ) * smooth;
+
+
+    /*
+     * 마우스 방향으로 아주 살짝
+     * 위치도 움직임
+     */
+    const moveX =
+      currentRotateY * 0.18;
+
+    const moveY =
+      -currentRotateX * 0.18;
+
+
+    profileImg.style.transform = `
+      perspective(600px)
+
+      translate3d(
+        ${moveX}px,
+        ${moveY}px,
+        8px
+      )
+
+      rotateX(
+        ${currentRotateX}deg
+      )
+
+      rotateY(
+        ${currentRotateY}deg
+      )
+
+      scale(1.025)
+    `;
+  }
+
+
+  requestAnimationFrame(
+    animateProfileLook
   );
+}
 
-  if (!img) return;
-
-  // 같은 프사 내부로 이동한 건 무시
-  if (
-    e.relatedTarget &&
-    img.contains(e.relatedTarget)
-  ) return;
+animateProfileLook();
 
 
-  img.style.transform = `
-    perspective(500px)
-    rotateX(0deg)
-    rotateY(0deg)
-    translateZ(0)
-    scale(1)
-  `;
-});
+// =========================
+// 프사 클릭 → 오로라 ON / OFF
+//
+// my_word 클릭 → 링크 이동만 방지
+// =========================
+
+document.addEventListener(
+  'click',
+  e => {
+
+    const profileImg =
+      e.target.closest(
+        '[data-name="profileImg"]'
+      );
+
+
+    if (profileImg) {
+
+      // 부모 <a>의 정보수정 이동 방지
+      e.preventDefault();
+      e.stopPropagation();
+
+
+      // 오로라 상태 반전
+      profileAuraEnabled =
+        !profileAuraEnabled;
+
+
+      const aura =
+        ensureProfileAura()?.aura;
+
+
+      if (aura) {
+
+        aura.classList.toggle(
+          'aura-off',
+          !profileAuraEnabled
+        );
+
+      }
+
+      return;
+    }
+
+
+    const myWord =
+      e.target.closest(
+        '[data-name="my_word"]'
+      );
+
+
+    if (myWord) {
+
+      // 응원문구 클릭 시
+      // 정보수정 화면 이동 방지
+      e.preventDefault();
+      e.stopPropagation();
+
+    }
+
+  },
+
+  // 부모 a 태그보다 먼저 처리
+  true
+);
+
+
+// =========================
+// 창 크기 변경 대응
+// =========================
+
+window.addEventListener(
+  'resize',
+  () => {
+
+    ensureProfileAura();
+
+  }
+);
 })();
