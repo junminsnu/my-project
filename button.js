@@ -120,166 +120,307 @@
 
   // 1분마다 현재 시간 확인
   setInterval(updateMyWord, 60000);
-    /* =========================
-     4. 절대 못 잡는 생쥐 🐭
-     ========================= */
+/* =========================
+   4. 계속 돌아다니는 생쥐 🐭
+   ========================= */
 
-  const mouse = document.createElement('div');
-  mouse.id = 'runaway-mouse';
-  mouse.textContent = '🐭';
+const mouse = document.createElement('div');
+mouse.id = 'runaway-mouse';
+mouse.textContent = '🐭';
 
-  Object.assign(mouse.style, {
-    position: 'fixed',
-    left: '50%',
-    top: '50%',
-    fontSize: '34px',
-    zIndex: '999999',
-    cursor: 'default',
+Object.assign(mouse.style, {
+  position: 'fixed',
+  left: '0',
+  top: '0',
+  fontSize: '34px',
+  zIndex: '999999',
+  pointerEvents: 'none',
+  userSelect: 'none',
+  filter: 'drop-shadow(0 3px 3px #0005)',
+  willChange: 'transform'
+});
 
-    // 클릭 / 드래그 불가능
-    pointerEvents: 'none',
-
-    // 이동 효과
-    transition: 'left .12s ease-out, top .12s ease-out, transform .12s',
-    userSelect: 'none',
-
-    // 살짝 그림자
-    filter: 'drop-shadow(0 3px 3px #0005)'
-  });
-
-  document.body.appendChild(mouse);
+document.body.appendChild(mouse);
 
 
-  // 현재 생쥐 위치
-  let mouseX = window.innerWidth * 0.5;
-  let mouseY = window.innerHeight * 0.5;
+// =========================
+// 현재 상태
+// =========================
 
-  function moveMouse(x, y) {
-    const padding = 35;
+let x = window.innerWidth * 0.5;
+let y = window.innerHeight * 0.5;
 
-    x = Math.max(
-      padding,
-      Math.min(window.innerWidth - padding, x)
-    );
+let vx = 0;
+let vy = 0;
 
-    y = Math.max(
-      padding,
-      Math.min(window.innerHeight - padding, y)
-    );
+// 평소 이동 방향
+let wanderAngle = Math.random() * Math.PI * 2;
 
-    mouseX = x;
-    mouseY = y;
-
-    mouse.style.left = `${x}px`;
-    mouse.style.top = `${y}px`;
-  }
+// 실제 커서 위치
+let cursorX = -9999;
+let cursorY = -9999;
 
 
-  // 처음에는 랜덤 위치
-  moveMouse(
-    Math.random() * window.innerWidth,
-    Math.random() * window.innerHeight
+// =========================
+// 설정값
+// =========================
+
+// 커서 감지 거리
+const dangerDistance = 170;
+
+// 평소 돌아다니는 속도
+const wanderSpeed = 1.4;
+
+// 도망갈 때 최대 속도
+const escapeSpeed = 7;
+
+// 방향 전환 부드러움
+const steering = 0.025;
+
+// 화면 가장자리 여백
+const padding = 35;
+
+
+// =========================
+// 커서 위치 추적
+// =========================
+
+document.addEventListener('mousemove', e => {
+  cursorX = e.clientX;
+  cursorY = e.clientY;
+});
+
+
+// =========================
+// 평소 랜덤 방향 변경
+// =========================
+
+// 0.4~1.4초마다 살짝 방향 변경
+function changeWanderDirection() {
+
+  // 현재 방향에서 랜덤하게 좌우 회전
+  wanderAngle +=
+    (Math.random() - 0.5) * Math.PI * 1.2;
+
+  const next =
+    400 + Math.random() * 1000;
+
+  setTimeout(changeWanderDirection, next);
+}
+
+changeWanderDirection();
+
+
+// =========================
+// 움직임
+// =========================
+
+function animateMouse() {
+
+  const dx = x - cursorX;
+  const dy = y - cursorY;
+
+  const distance = Math.sqrt(
+    dx * dx + dy * dy
   );
 
 
-  document.addEventListener('mousemove', e => {
-
-    const dx = mouseX - e.clientX;
-    const dy = mouseY - e.clientY;
-
-    const distance = Math.sqrt(
-      dx * dx + dy * dy
-    );
-
-    // 이 거리 안으로 들어오면 도망
-    const dangerDistance = 150;
-
-    if (distance < dangerDistance) {
-
-      // 마우스와 반대 방향
-      let angle = Math.atan2(dy, dx);
-
-      // 너무 예측 가능하지 않게 랜덤 각도 추가
-      angle += (Math.random() - 0.5) * 1.5;
-
-      // 가까울수록 더 멀리 튐
-      const jump =
-        180 +
-        Math.random() * 180 +
-        (dangerDistance - distance);
-
-      let newX =
-        mouseX +
-        Math.cos(angle) * jump;
-
-      let newY =
-        mouseY +
-        Math.sin(angle) * jump;
+  let targetVX;
+  let targetVY;
 
 
-      /*
-       * 화면 끝에 몰리면
-       * 반대편 근처로 순간 탈출
-       */
-      const edge = 80;
+  if (
+    distance < dangerDistance &&
+    distance > 0
+  ) {
 
-      if (
-        newX < edge ||
-        newX > window.innerWidth - edge ||
-        newY < edge ||
-        newY > window.innerHeight - edge
-      ) {
-        newX =
-          edge +
-          Math.random() *
-          (window.innerWidth - edge * 2);
+    /* -------------------------
+       커서가 가까우면 도망
+       ------------------------- */
 
-        newY =
-          edge +
-          Math.random() *
-          (window.innerHeight - edge * 2);
-      }
+    const escapeAngle =
+      Math.atan2(dy, dx);
+
+    // 가까울수록 빨라짐
+    const power =
+      1 - distance / dangerDistance;
+
+    const speed =
+      3 +
+      power * (escapeSpeed - 3);
+
+    targetVX =
+      Math.cos(escapeAngle) * speed;
+
+    targetVY =
+      Math.sin(escapeAngle) * speed;
 
 
-      // 도망갈 때 살짝 회전
-      mouse.style.transform =
-        `translate(-50%, -50%)
-         rotate(${Math.random() * 50 - 25}deg)
-         scale(1.15)`;
+    // 너무 가까우면 살짝 옆으로 틀기
+    // 직선으로만 도망가지 않게
+    if (distance < 80) {
 
-      moveMouse(newX, newY);
+      const side =
+        Math.random() < 0.5 ? -1 : 1;
 
-      setTimeout(() => {
-        mouse.style.transform =
-          'translate(-50%, -50%) scale(1)';
-      }, 120);
+      targetVX +=
+        Math.cos(escapeAngle + Math.PI / 2) *
+        side *
+        1.5;
+
+      targetVY +=
+        Math.sin(escapeAngle + Math.PI / 2) *
+        side *
+        1.5;
     }
-  });
+
+  } else {
+
+    /* -------------------------
+       평소에는 계속 돌아다님
+       ------------------------- */
+
+    targetVX =
+      Math.cos(wanderAngle) *
+      wanderSpeed;
+
+    targetVY =
+      Math.sin(wanderAngle) *
+      wanderSpeed;
+  }
 
 
-  /*
-   * 가만히 놔두면 가끔 혼자 슬금슬금 이동
-   */
-  setInterval(() => {
+  // =========================
+  // 목표 속도로 부드럽게 회전
+  // =========================
 
-    moveMouse(
-      40 +
+  vx +=
+    (targetVX - vx) *
+    steering;
+
+  vy +=
+    (targetVY - vy) *
+    steering;
+
+
+  // =========================
+  // 이동
+  // =========================
+
+  x += vx;
+  y += vy;
+
+
+  // =========================
+  // 벽 만나면 자연스럽게 방향 변경
+  // =========================
+
+  if (x < padding) {
+
+    x = padding;
+
+    wanderAngle =
       Math.random() *
-      (window.innerWidth - 80),
+      Math.PI -
+      Math.PI / 2;
 
-      40 +
+    vx = Math.abs(vx);
+  }
+
+
+  if (
+    x >
+    window.innerWidth - padding
+  ) {
+
+    x =
+      window.innerWidth - padding;
+
+    wanderAngle =
+      Math.PI / 2 +
       Math.random() *
-      (window.innerHeight - 80)
+      Math.PI;
+
+    vx = -Math.abs(vx);
+  }
+
+
+  if (y < padding) {
+
+    y = padding;
+
+    wanderAngle =
+      Math.random() *
+      Math.PI;
+
+    vy = Math.abs(vy);
+  }
+
+
+  if (
+    y >
+    window.innerHeight - padding
+  ) {
+
+    y =
+      window.innerHeight - padding;
+
+    wanderAngle =
+      Math.PI +
+      Math.random() *
+      Math.PI;
+
+    vy = -Math.abs(vy);
+  }
+
+
+  // =========================
+  // 생쥐 표시
+  // =========================
+
+  const flip =
+    vx < 0 ? -1 : 1;
+
+  // 달릴 때 아주 살짝 위아래 흔들림
+  const bounce =
+    Math.sin(performance.now() / 90) *
+    Math.min(
+      2,
+      Math.abs(vx) + Math.abs(vy)
     );
 
-  }, 5000);
+  mouse.style.transform =
+    `translate(
+      ${x}px,
+      ${y + bounce}px
+    )
+    translate(-50%, -50%)
+    scaleX(${flip})`;
 
 
-  /*
-   * 창 크기가 바뀌어서
-   * 생쥐가 화면 밖으로 나갔을 경우 복귀
-   */
-  window.addEventListener('resize', () => {
-    moveMouse(mouseX, mouseY);
-  });
+  requestAnimationFrame(animateMouse);
+}
+
+animateMouse();
+
+
+// 창 크기 변경 대응
+window.addEventListener('resize', () => {
+
+  x = Math.max(
+    padding,
+    Math.min(
+      window.innerWidth - padding,
+      x
+    )
+  );
+
+  y = Math.max(
+    padding,
+    Math.min(
+      window.innerHeight - padding,
+      y
+    )
+  );
+});
 })();
