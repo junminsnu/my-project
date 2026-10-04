@@ -987,14 +987,34 @@
 
 
   /* =========================
-     4. 요일별 응원 문구
+     4. 응원 문구
 
-     금요일 오전 = 00:00 ~ 11:59
-     금요일 오후부터 일요일까지 = 주말 문구
+     - 기존 시간대별 문구
+     - 요일별 문구
+     - 둘 중 하나를 랜덤 선택
+     - 0.5초 감시 때문에 문구가 계속 깜빡이지 않도록
+       같은 시간대에서는 한 번 선택한 문구를 유지
+     - 시간대가 바뀌면 다시 랜덤 선택
      ========================= */
 
-  function getCurrentMessage() {
-    const now = new Date();
+  const timeMessages = [
+    { start: 0,  end: 4,  text: '조금만 더하고 빨리자 ㅎㅎ 사랑해🐰❣️' },
+    { start: 4,  end: 11, text: '오늘 하루도 힘내💗' },
+    { start: 11, end: 13, text: '점심 잘머거💗' },
+    { start: 13, end: 16, text: '좋은 오후 보내🧡' },
+    { start: 16, end: 23, text: '오늘 하루도 수고했어🤍' },
+    { start: 23, end: 24, text: '오늘은 여기까지 해도 충분해 💗😴🤍 잘자' }
+  ];
+
+  function getTimeMessage(now = new Date()) {
+    const hour = now.getHours();
+
+    return timeMessages.find(
+      item => hour >= item.start && hour < item.end
+    ) || null;
+  }
+
+  function getWeekdayMessage(now = new Date()) {
     const day = now.getDay();
     const hour = now.getHours();
 
@@ -1032,6 +1052,49 @@
     return {
       text: '주말은 푹셔🤍'
     };
+  }
+
+  let randomMessageSlot = '';
+  let randomMessageItem = null;
+
+  function getMessageSlotKey(now = new Date()) {
+    const hour = now.getHours();
+    const timeItem = getTimeMessage(now);
+
+    const timeSlot = timeItem
+      ? `${timeItem.start}-${timeItem.end}`
+      : String(hour);
+
+    // 날짜 + 시간대가 같으면 같은 랜덤 결과 유지
+    return [
+      now.getFullYear(),
+      now.getMonth() + 1,
+      now.getDate(),
+      timeSlot
+    ].join('-');
+  }
+
+  function getCurrentMessage() {
+    const now = new Date();
+    const slot = getMessageSlotKey(now);
+
+    if (slot !== randomMessageSlot || !randomMessageItem) {
+      const timeItem = getTimeMessage(now);
+      const weekdayItem = getWeekdayMessage(now);
+
+      const candidates = [
+        timeItem,
+        weekdayItem
+      ].filter(Boolean);
+
+      randomMessageItem = candidates.length
+        ? candidates[Math.floor(Math.random() * candidates.length)]
+        : null;
+
+      randomMessageSlot = slot;
+    }
+
+    return randomMessageItem;
   }
 
 
@@ -1177,7 +1240,15 @@ mouse.addEventListener('click', e => {
 // 테마 창의 "생쥐 다시 부르기"에서 사용
 function showMouseAgain() {
   mouseHidden = false;
+  mouseGoingToProfile = false;
+  mouseUnderProfile = false;
+  chaseStartedAt = 0;
+  profileLeaveStartedAt = 0;
+
   mouse.style.display = 'block';
+  mouse.style.opacity = '1';
+  mouse.style.zIndex = '999999';
+  mouse.style.pointerEvents = 'auto';
 
   // 다시 부를 때 화면 중앙 근처에서 재시작
   x = window.innerWidth * 0.5;
@@ -1194,6 +1265,88 @@ function showMouseAgain() {
   } catch (e) {}
 }
 
+
+// =========================
+// 생쥐가 프로필 사진 밑으로 숨는 상태
+// =========================
+
+let mouseGoingToProfile = false;
+let mouseUnderProfile = false;
+let chaseStartedAt = 0;
+let profileLeaveStartedAt = 0;
+
+// 이 시간 이상 계속 쫓아오면 프사 밑으로 도망감
+const chaseToProfileDelay = 900;
+
+// 프사에서 이 거리 이상 떨어져 있으면 다시 나올 준비
+const profileReleaseDistance = 280;
+
+// 커서가 멀어진 상태가 이만큼 유지되면 다시 등장
+const profileReleaseDelay = 1200;
+
+function getMouseProfileShelter() {
+  const profileImg =
+    document.querySelector('[data-name="profileImg"]');
+
+  if (!profileImg) return null;
+
+  const rect = profileImg.getBoundingClientRect();
+
+  if (!rect.width || !rect.height) return null;
+
+  return {
+    // 사진 중앙보다 살짝 아래쪽: 사진 밑으로 들어가는 느낌
+    x: rect.left + rect.width * 0.50,
+    y: rect.top + rect.height * 0.66,
+    centerX: rect.left + rect.width / 2,
+    centerY: rect.top + rect.height / 2,
+    rect
+  };
+}
+
+function startMouseProfileEscape() {
+  if (mouseGoingToProfile || mouseUnderProfile) return;
+
+  mouseGoingToProfile = true;
+  mouseUnderProfile = false;
+  chaseStartedAt = 0;
+  profileLeaveStartedAt = 0;
+
+  // 프사로 도망가는 동안에는 클릭보다 도망 동작 우선
+  mouse.style.pointerEvents = 'none';
+  mouse.style.opacity = '1';
+  mouse.style.zIndex = '999999';
+}
+
+function releaseMouseFromProfile() {
+  const shelter = getMouseProfileShelter();
+
+  mouseGoingToProfile = false;
+  mouseUnderProfile = false;
+  chaseStartedAt = 0;
+  profileLeaveStartedAt = 0;
+
+  mouse.style.opacity = '1';
+  mouse.style.zIndex = '999999';
+  mouse.style.pointerEvents = 'auto';
+
+  // 프사 옆에서 슬쩍 다시 나옴
+  if (shelter) {
+    x = Math.min(
+      window.innerWidth - padding,
+      shelter.rect.right + 24
+    );
+
+    y = Math.min(
+      window.innerHeight - padding,
+      shelter.rect.bottom - 8
+    );
+  }
+
+  vx = 0;
+  vy = 0;
+  wanderAngle = Math.random() * Math.PI * 2;
+}
 
 // =========================
 // 현재 상태
@@ -1269,12 +1422,14 @@ changeWanderDirection();
 
 function animateMouse() {
 
-  // 숨겨져 있어도 애니메이션 루프는 유지해서
-  // 나중에 "생쥐 다시 부르기"가 즉시 작동하게 함
+  // 완전히 숨김 처리된 상태라면 루프만 유지
   if (mouseHidden) {
     requestAnimationFrame(animateMouse);
     return;
   }
+
+  const now = performance.now();
+  const shelter = getMouseProfileShelter();
 
   const dx = x - cursorX;
   const dy = y - cursorY;
@@ -1282,6 +1437,180 @@ function animateMouse() {
   const distance = Math.sqrt(
     dx * dx + dy * dy
   );
+
+
+  // =========================
+  // 계속 쫓아오면 프사 쪽으로 피신 시작
+  // =========================
+
+  if (
+    !mouseGoingToProfile &&
+    !mouseUnderProfile
+  ) {
+
+    if (
+      distance < dangerDistance &&
+      distance > 0
+    ) {
+
+      if (!chaseStartedAt) {
+        chaseStartedAt = now;
+      }
+
+      if (
+        now - chaseStartedAt >=
+        chaseToProfileDelay
+      ) {
+        startMouseProfileEscape();
+      }
+
+    } else if (
+      distance > dangerDistance * 1.15
+    ) {
+      // 커서가 충분히 멀어지면 추격 판정 초기화
+      chaseStartedAt = 0;
+    }
+  }
+
+
+  // =========================
+  // 프사 밑으로 도망가는 중
+  // =========================
+
+  if (mouseGoingToProfile) {
+
+    if (!shelter) {
+      mouseGoingToProfile = false;
+      mouse.style.pointerEvents = 'auto';
+    } else {
+
+      const toX = shelter.x - x;
+      const toY = shelter.y - y;
+      const toDistance = Math.sqrt(
+        toX * toX + toY * toY
+      );
+
+      if (toDistance > 0) {
+        const runSpeed = Math.min(
+          11,
+          Math.max(5.5, toDistance * 0.075)
+        );
+
+        const targetVX =
+          toX / toDistance * runSpeed;
+
+        const targetVY =
+          toY / toDistance * runSpeed;
+
+        // 프사로 피신할 때는 평소보다 빠르게 방향 전환
+        vx += (targetVX - vx) * 0.16;
+        vy += (targetVY - vy) * 0.16;
+      }
+
+      x += vx;
+      y += vy;
+
+      const afterDX = shelter.x - x;
+      const afterDY = shelter.y - y;
+      const afterDistance = Math.sqrt(
+        afterDX * afterDX + afterDY * afterDY
+      );
+
+      // 사진 가까이 들어가면 사진 뒤 레이어로 이동
+      if (afterDistance < 42) {
+        mouse.style.zIndex = '1';
+
+        // 안쪽으로 들어갈수록 자연스럽게 사라짐
+        mouse.style.opacity = String(
+          Math.max(0, Math.min(1, afterDistance / 42))
+        );
+      }
+
+      if (afterDistance < 9) {
+        x = shelter.x;
+        y = shelter.y;
+        vx = 0;
+        vy = 0;
+
+        mouseGoingToProfile = false;
+        mouseUnderProfile = true;
+
+        mouse.style.opacity = '0';
+        mouse.style.zIndex = '1';
+      }
+
+      const flip = vx < 0 ? -1 : 1;
+
+      mouse.style.transform =
+        `translate(${x}px, ${y}px) ` +
+        `translate(-50%, -50%) ` +
+        `scaleX(${flip})`;
+
+      requestAnimationFrame(animateMouse);
+      return;
+    }
+  }
+
+
+  // =========================
+  // 프사 밑에 숨어 있는 상태
+  // =========================
+
+  if (mouseUnderProfile) {
+
+    if (!shelter) {
+      releaseMouseFromProfile();
+    } else {
+
+      // 프사가 움직이거나 화면이 바뀌어도 밑에 붙어 있게
+      x = shelter.x;
+      y = shelter.y;
+      vx = 0;
+      vy = 0;
+
+      mouse.style.opacity = '0';
+      mouse.style.zIndex = '1';
+
+      mouse.style.transform =
+        `translate(${x}px, ${y}px) ` +
+        `translate(-50%, -50%)`;
+
+      const cursorProfileDX =
+        cursorX - shelter.centerX;
+
+      const cursorProfileDY =
+        cursorY - shelter.centerY;
+
+      const cursorProfileDistance =
+        Math.sqrt(
+          cursorProfileDX * cursorProfileDX +
+          cursorProfileDY * cursorProfileDY
+        );
+
+      if (
+        cursorProfileDistance >
+        profileReleaseDistance
+      ) {
+
+        if (!profileLeaveStartedAt) {
+          profileLeaveStartedAt = now;
+        }
+
+        if (
+          now - profileLeaveStartedAt >=
+          profileReleaseDelay
+        ) {
+          releaseMouseFromProfile();
+        }
+
+      } else {
+        profileLeaveStartedAt = 0;
+      }
+
+      requestAnimationFrame(animateMouse);
+      return;
+    }
+  }
 
 
   let targetVX;
@@ -1316,7 +1645,6 @@ function animateMouse() {
 
 
     // 너무 가까우면 살짝 옆으로 틀기
-    // 직선으로만 도망가지 않게
     if (distance < 80) {
 
       const side =
@@ -1349,10 +1677,7 @@ function animateMouse() {
   }
 
 
-  // =========================
   // 목표 속도로 부드럽게 회전
-  // =========================
-
   vx +=
     (targetVX - vx) *
     steering;
@@ -1362,91 +1687,53 @@ function animateMouse() {
     steering;
 
 
-  // =========================
   // 이동
-  // =========================
-
   x += vx;
   y += vy;
 
 
-  // =========================
   // 벽 만나면 자연스럽게 방향 변경
-  // =========================
-
   if (x < padding) {
-
     x = padding;
-
     wanderAngle =
-      Math.random() *
-      Math.PI -
-      Math.PI / 2;
-
+      Math.random() * Math.PI - Math.PI / 2;
     vx = Math.abs(vx);
   }
 
-
-  if (
-    x >
-    window.innerWidth - padding
-  ) {
-
-    x =
-      window.innerWidth - padding;
-
+  if (x > window.innerWidth - padding) {
+    x = window.innerWidth - padding;
     wanderAngle =
-      Math.PI / 2 +
-      Math.random() *
-      Math.PI;
-
+      Math.PI / 2 + Math.random() * Math.PI;
     vx = -Math.abs(vx);
   }
 
-
   if (y < padding) {
-
     y = padding;
-
-    wanderAngle =
-      Math.random() *
-      Math.PI;
-
+    wanderAngle = Math.random() * Math.PI;
     vy = Math.abs(vy);
   }
 
-
-  if (
-    y >
-    window.innerHeight - padding
-  ) {
-
-    y =
-      window.innerHeight - padding;
-
+  if (y > window.innerHeight - padding) {
+    y = window.innerHeight - padding;
     wanderAngle =
-      Math.PI +
-      Math.random() *
-      Math.PI;
-
+      Math.PI + Math.random() * Math.PI;
     vy = -Math.abs(vy);
   }
 
 
-  // =========================
   // 생쥐 표시
-  // =========================
+  const flip = vx < 0 ? -1 : 1;
 
-  const flip =
-    vx < 0 ? -1 : 1;
-
-  // 달릴 때 아주 살짝 위아래 흔들림
   const bounce =
     Math.sin(performance.now() / 90) *
     Math.min(
       2,
       Math.abs(vx) + Math.abs(vy)
     );
+
+  mouse.style.opacity = '1';
+  mouse.style.zIndex = '999999';
+  mouse.style.pointerEvents = 'auto';
 
   mouse.style.transform =
     `translate(
@@ -2141,32 +2428,33 @@ themeStyle.textContent = `
      ========================= */
 
   html[data-my-theme="purple"] {
-    --my-bg: #f4f1fb;
+    /* 파스텔 퍼플 */
+    --my-bg: #fbf8ff;
     --my-card: #ffffff;
-    --my-card-2: #f5f1ff;
+    --my-card-2: #f6efff;
 
-    --my-text: #342d40;
-    --my-subtext: #7d728c;
+    --my-text: #4a4055;
+    --my-subtext: #887b95;
 
-    --my-border: #e5dcf3;
+    --my-border: #eadcf5;
 
-    --my-accent: #7c3aed;
-    --my-accent-2: #a855f7;
+    --my-accent: #d7bce8;
+    --my-accent-2: #e4cef2;
 
-    --my-soft: #eee7fa;
+    --my-soft: #f0e4f8;
 
     --my-shadow:
-      0 4px 20px rgba(124,58,237,.08);
+      0 4px 20px rgba(215,188,232,.24);
 
-    --nav-bg-1: #6d28d9;
-    --nav-bg-2: #a855f7;
+    --nav-bg-1: #d7bce8;
+    --nav-bg-2: #e4cef2;
 
-    --nav-text: #ffffff;
-    --nav-hover: rgba(255,255,255,.14);
+    --nav-text: #4a4055;
+    --nav-hover: rgba(255,255,255,.30);
 
     --nav-sub-bg: #ffffff;
-    --nav-sub-text: #342d40;
-    --nav-sub-hover: #f3e8ff;
+    --nav-sub-text: #4a4055;
+    --nav-sub-hover: #f6efff;
   }
 
 
@@ -2175,32 +2463,33 @@ themeStyle.textContent = `
      ========================= */
 
   html[data-my-theme="pink"] {
-    --my-bg: #fff3f7;
+    /* 파스텔 핑크: RGB(255, 200, 240) = #FFC8F0 */
+    --my-bg: #fff8fd;
     --my-card: #ffffff;
-    --my-card-2: #fff4f8;
+    --my-card-2: #fff1fa;
 
-    --my-text: #423238;
-    --my-subtext: #8d747d;
+    --my-text: #4b3545;
+    --my-subtext: #8a7182;
 
-    --my-border: #f3dce5;
+    --my-border: #f6ddec;
 
-    --my-accent: #ec4899;
-    --my-accent-2: #f472b6;
+    --my-accent: rgb(255, 200, 240);
+    --my-accent-2: #ffd9f3;
 
-    --my-soft: #fde8f1;
+    --my-soft: #ffe8f8;
 
     --my-shadow:
-      0 4px 20px rgba(236,72,153,.08);
+      0 4px 20px rgba(255,200,240,.24);
 
-    --nav-bg-1: #db2777;
-    --nav-bg-2: #f472b6;
+    --nav-bg-1: rgb(255, 200, 240);
+    --nav-bg-2: #ffd9f3;
 
-    --nav-text: #ffffff;
-    --nav-hover: rgba(255,255,255,.14);
+    --nav-text: #4b3545;
+    --nav-hover: rgba(255,255,255,.30);
 
     --nav-sub-bg: #ffffff;
-    --nav-sub-text: #423238;
-    --nav-sub-hover: #fce7f3;
+    --nav-sub-text: #4b3545;
+    --nav-sub-hover: #fff1fa;
   }
 
 
@@ -2209,32 +2498,33 @@ themeStyle.textContent = `
      ========================= */
 
   html[data-my-theme="mint"] {
-    --my-bg: #effaf7;
+    /* 파스텔 민트 */
+    --my-bg: #f7fcfa;
     --my-card: #ffffff;
-    --my-card-2: #f0faf7;
+    --my-card-2: #eef9f5;
 
-    --my-text: #293d38;
-    --my-subtext: #6f8781;
+    --my-text: #344b45;
+    --my-subtext: #748b84;
 
-    --my-border: #d7eee7;
+    --my-border: #d8eee7;
 
-    --my-accent: #0f9f82;
-    --my-accent-2: #34c7a7;
+    --my-accent: #b8e3d6;
+    --my-accent-2: #cceee4;
 
-    --my-soft: #dcf4ed;
+    --my-soft: #e2f5ef;
 
     --my-shadow:
-      0 4px 20px rgba(15,159,130,.08);
+      0 4px 20px rgba(184,227,214,.26);
 
-    --nav-bg-1: #0f766e;
-    --nav-bg-2: #2dd4bf;
+    --nav-bg-1: #b8e3d6;
+    --nav-bg-2: #cceee4;
 
-    --nav-text: #ffffff;
-    --nav-hover: rgba(255,255,255,.14);
+    --nav-text: #344b45;
+    --nav-hover: rgba(255,255,255,.32);
 
     --nav-sub-bg: #ffffff;
-    --nav-sub-text: #293d38;
-    --nav-sub-hover: #dff8f3;
+    --nav-sub-text: #344b45;
+    --nav-sub-hover: #eef9f5;
   }
 
 
@@ -2818,6 +3108,29 @@ themeStyle.textContent = `
 
   .my-theme-wide-action {
     grid-column: 1 / -1;
+  }
+
+  /* =========================
+     프로필 카드 세로 공간 확장
+     D-Day / 이름 / 응원문구가 아래에서 잘리지 않게 함
+     ========================= */
+
+  .main-profile,
+  .main-profile .card-body,
+  .main-profile .card-content {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .main-profile .card-body {
+    min-height: 390px !important;
+    padding-bottom: 22px !important;
+  }
+
+  .main-profile .card-content {
+    min-height: 350px !important;
+    padding-bottom: 20px !important;
+    box-sizing: border-box !important;
   }
 
   #my-dday {
