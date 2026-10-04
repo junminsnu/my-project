@@ -138,7 +138,214 @@ box.appendChild(themeShortcut);
 
 
   /* =========================
-     2. 시간대별 my_word 문구
+     2. 프로필 이름 커스텀
+
+     - 학번 (숫자) 자동 제거
+     - 기본 이름이 민유진이면 "유지니"로 표시
+     - 이름 클릭 → 바로 수정
+     - Enter / 포커스 해제 → localStorage 저장
+     - Esc → 수정 취소
+     ========================= */
+
+  const PROFILE_NAME_STORAGE_KEY =
+    'my-uportfolio-profile-name';
+
+  function stripStudentNumber(text) {
+    return String(text || '')
+      .replace(/\s*\(\s*\d{6,12}\s*\)\s*$/g, '')
+      .trim();
+  }
+
+  let defaultProfileName = '';
+  let customProfileName = '';
+  let profileNameInitialized = false;
+
+  function initializeProfileName(nameEl) {
+    if (profileNameInitialized || !nameEl) return;
+
+    const originalName = stripStudentNumber(
+      nameEl.textContent
+    );
+
+    defaultProfileName =
+      originalName === '민유진'
+        ? '유지니'
+        : (originalName || '유지니');
+
+    let savedName = '';
+
+    try {
+      savedName = stripStudentNumber(
+        localStorage.getItem(
+          PROFILE_NAME_STORAGE_KEY
+        ) || ''
+      );
+    } catch (e) {}
+
+    customProfileName = savedName || defaultProfileName;
+    profileNameInitialized = true;
+
+    // 최초 기본값도 저장해서 새로고침 후 그대로 유지
+    if (!savedName) {
+      try {
+        localStorage.setItem(
+          PROFILE_NAME_STORAGE_KEY,
+          customProfileName
+        );
+      } catch (e) {}
+    }
+  }
+
+  function saveCustomProfileName(name) {
+    const cleaned =
+      stripStudentNumber(name) || defaultProfileName || '유지니';
+
+    customProfileName = cleaned;
+
+    try {
+      localStorage.setItem(
+        PROFILE_NAME_STORAGE_KEY,
+        cleaned
+      );
+    } catch (e) {}
+
+    return cleaned;
+  }
+
+  function ensureCustomProfileName() {
+    const nameEl = document.querySelector(
+      '.main-profile .user .name'
+    );
+
+    if (!nameEl) return;
+
+    initializeProfileName(nameEl);
+
+    nameEl.dataset.myEditableName = 'true';
+    nameEl.title = '클릭해서 이름 수정';
+    nameEl.style.cursor = 'text';
+
+    if (nameEl.getAttribute('contenteditable') === 'true') {
+      return;
+    }
+
+    if (nameEl.textContent !== customProfileName) {
+      nameEl.textContent = customProfileName;
+    }
+  }
+
+  function finishProfileNameEdit(nameEl, shouldSave = true) {
+    if (!nameEl) return;
+
+    if (shouldSave) {
+      nameEl.textContent = saveCustomProfileName(
+        nameEl.textContent
+      );
+    } else {
+      nameEl.textContent = customProfileName;
+    }
+
+    nameEl.removeAttribute('contenteditable');
+    nameEl.removeAttribute('spellcheck');
+    nameEl.style.outline = '';
+    nameEl.style.borderRadius = '';
+  }
+
+  function startProfileNameEdit(nameEl) {
+    if (!nameEl) return;
+    if (nameEl.getAttribute('contenteditable') === 'true') return;
+
+    initializeProfileName(nameEl);
+
+    nameEl.setAttribute('contenteditable', 'true');
+    nameEl.setAttribute('spellcheck', 'false');
+    nameEl.style.outline = '2px solid var(--my-accent, #2563eb)';
+    nameEl.style.borderRadius = '6px';
+
+    nameEl.focus();
+
+    const range = document.createRange();
+    range.selectNodeContents(nameEl);
+
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+
+  ensureCustomProfileName();
+
+  // 사이트가 프로필 영역을 다시 그려도 이름 복구
+  setInterval(
+    ensureCustomProfileName,
+    500
+  );
+
+  document.addEventListener(
+    'click',
+    e => {
+      const nameEl = e.target.closest(
+        '.main-profile .user .name'
+      );
+
+      if (!nameEl) return;
+
+      // 수정 중에는 기본 클릭 동작(커서 이동/선택)을 유지
+      if (nameEl.getAttribute('contenteditable') === 'true') {
+        e.stopPropagation();
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      startProfileNameEdit(nameEl);
+    },
+    true
+  );
+
+  document.addEventListener(
+    'keydown',
+    e => {
+      const nameEl = e.target.closest?.(
+        '.main-profile .user .name[contenteditable="true"]'
+      );
+
+      if (!nameEl) return;
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        finishProfileNameEdit(nameEl, true);
+        nameEl.blur();
+      }
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        finishProfileNameEdit(nameEl, false);
+        nameEl.blur();
+      }
+    },
+    true
+  );
+
+  document.addEventListener(
+    'focusout',
+    e => {
+      const nameEl = e.target.closest?.(
+        '.main-profile .user .name[contenteditable="true"]'
+      );
+
+      if (!nameEl) return;
+
+      finishProfileNameEdit(nameEl, true);
+    },
+    true
+  );
+
+
+  /* =========================
+     3. 시간대별 my_word 문구
 
      start = 시작 시간
      end   = 끝 시간
@@ -253,11 +460,26 @@ setInterval(injectMyWord, 500);
 // 창 크기 변경 시에도 즉시 복구
 window.addEventListener('resize', injectMyWord);/* =========================
    4. 계속 돌아다니는 생쥐 🐭
+   - 생쥐 클릭 → 즉시 숨김
+   - 숨김 상태는 localStorage에 저장
    ========================= */
+
+const MOUSE_HIDDEN_STORAGE_KEY =
+  'my-uportfolio-mouse-hidden';
+
+let mouseHidden = false;
+
+try {
+  mouseHidden =
+    localStorage.getItem(
+      MOUSE_HIDDEN_STORAGE_KEY
+    ) === 'true';
+} catch (e) {}
 
 const mouse = document.createElement('div');
 mouse.id = 'runaway-mouse';
 mouse.textContent = '🐭';
+mouse.title = '클릭하면 생쥐 숨기기';
 
 Object.assign(mouse.style, {
   position: 'fixed',
@@ -265,13 +487,38 @@ Object.assign(mouse.style, {
   top: '0',
   fontSize: '34px',
   zIndex: '999999',
-  pointerEvents: 'none',
+
+  // 클릭할 수 있도록 기존 none → auto
+  pointerEvents: 'auto',
+  cursor: 'pointer',
+
   userSelect: 'none',
   filter: 'drop-shadow(0 3px 3px #0005)',
-  willChange: 'transform'
+  willChange: 'transform',
+  display: mouseHidden ? 'none' : 'block'
 });
 
 document.body.appendChild(mouse);
+
+
+// =========================
+// 생쥐 클릭 → 숨김 + 저장
+// =========================
+
+mouse.addEventListener('click', e => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  mouseHidden = true;
+  mouse.style.display = 'none';
+
+  try {
+    localStorage.setItem(
+      MOUSE_HIDDEN_STORAGE_KEY,
+      'true'
+    );
+  } catch (e) {}
+});
 
 
 // =========================
@@ -329,6 +576,9 @@ document.addEventListener('mousemove', e => {
 // 0.4~1.4초마다 살짝 방향 변경
 function changeWanderDirection() {
 
+  // 숨겨진 뒤에는 타이머도 더 돌리지 않음
+  if (mouseHidden) return;
+
   // 현재 방향에서 랜덤하게 좌우 회전
   wanderAngle +=
     (Math.random() - 0.5) * Math.PI * 1.2;
@@ -339,7 +589,9 @@ function changeWanderDirection() {
   setTimeout(changeWanderDirection, next);
 }
 
-changeWanderDirection();
+if (!mouseHidden) {
+  changeWanderDirection();
+}
 
 
 // =========================
@@ -347,6 +599,9 @@ changeWanderDirection();
 // =========================
 
 function animateMouse() {
+
+  // 클릭해서 숨겨졌거나 저장된 숨김 상태면 종료
+  if (mouseHidden) return;
 
   const dx = x - cursorX;
   const dy = y - cursorY;
@@ -532,7 +787,9 @@ function animateMouse() {
   requestAnimationFrame(animateMouse);
 }
 
-animateMouse();
+if (!mouseHidden) {
+  animateMouse();
+}
 
 
 // 창 크기 변경 대응
@@ -554,6 +811,7 @@ window.addEventListener('resize', () => {
     )
   );
 });
+
   /* =========================
    5. 프로필 사진 후광 효과
    ========================= */
@@ -1464,7 +1722,8 @@ themeStyle.textContent = `
      내가 만든 바로가기
      ========================= */
 
-  html[data-my-theme] #profile-shortcuts a {
+  html[data-my-theme] #profile-shortcuts a,
+  html[data-my-theme] #profile-shortcuts button {
     background:
       linear-gradient(
         135deg,
