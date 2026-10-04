@@ -57,7 +57,79 @@ const links = [
 
     box.appendChild(a);
   });
+/* =========================
+   빈자리 → 색상 변경 버튼
+   ========================= */
 
+const themeShortcut = document.createElement('button');
+
+themeShortcut.type = 'button';
+themeShortcut.textContent = '🎨 색상 변경';
+
+Object.assign(themeShortcut.style, {
+  display: 'block',
+  width: '100%',
+  padding: '11px 6px',
+  border: '0',
+  borderRadius: '10px',
+
+  background:
+    'linear-gradient(135deg,#2563eb,#3b82f6)',
+
+  color: '#fff',
+  textAlign: 'center',
+  fontWeight: '700',
+  fontSize: '13px',
+
+  boxShadow: '0 3px 10px #0002',
+
+  cursor: 'pointer',
+
+  transition: '.15s'
+});
+
+
+themeShortcut.onmouseenter = () => {
+  themeShortcut.style.transform =
+    'translateY(-2px)';
+
+  themeShortcut.style.boxShadow =
+    '0 5px 14px #0003';
+};
+
+
+themeShortcut.onmouseleave = () => {
+  themeShortcut.style.transform = '';
+
+  themeShortcut.style.boxShadow =
+    '0 3px 10px #0002';
+};
+
+
+/*
+ * 누르면 기존 🎨 테마 선택창 열기
+ */
+themeShortcut.addEventListener(
+  'click',
+  e => {
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const panel =
+      document.querySelector(
+        '#my-theme-panel'
+      );
+
+    if (!panel) return;
+
+    panel.classList.toggle('open');
+
+  }
+);
+
+
+box.appendChild(themeShortcut);
   const profile = document.querySelector('.main-profile');
 
   if (profile && !document.querySelector('#profile-shortcuts')) {
