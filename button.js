@@ -1188,7 +1188,195 @@ themeStyle.textContent = `
       0 5px 22px rgba(0,0,0,.25);
   }
 
+/* =========================
+   상단 네비게이션 색상
+   ========================= */
 
+html {
+  --nav-bg-1: #2563eb;
+  --nav-bg-2: #7c3aed;
+
+  --nav-text: #ffffff;
+  --nav-hover: rgba(255,255,255,.14);
+
+  --nav-sub-bg: #ffffff;
+  --nav-sub-text: #333333;
+  --nav-sub-hover: #f3f4ff;
+}
+
+
+/* 블루 */
+html[data-my-theme="blue"] {
+  --nav-bg-1: #2563eb;
+  --nav-bg-2: #3b82f6;
+
+  --nav-sub-hover: #eaf1ff;
+}
+
+
+/* 퍼플 */
+html[data-my-theme="purple"] {
+  --nav-bg-1: #6d28d9;
+  --nav-bg-2: #9333ea;
+
+  --nav-sub-hover: #f3e8ff;
+}
+
+
+/* 핑크 */
+html[data-my-theme="pink"] {
+  --nav-bg-1: #db2777;
+  --nav-bg-2: #f472b6;
+
+  --nav-sub-hover: #fce7f3;
+}
+
+
+/* 민트 */
+html[data-my-theme="mint"] {
+  --nav-bg-1: #0f766e;
+  --nav-bg-2: #14b8a6;
+
+  --nav-sub-hover: #dff8f3;
+}
+
+
+/* 다크 */
+html[data-my-theme="dark"] {
+  --nav-bg-1: #1f2026;
+  --nav-bg-2: #34313f;
+
+  --nav-text: #f4f4f5;
+
+  --nav-sub-bg: #25272e;
+  --nav-sub-text: #eeeeee;
+  --nav-sub-hover: #353842;
+}
+
+
+/* =========================
+   실제 상단 바
+   ========================= */
+
+html:not([data-my-theme="default"])
+.nav-wrap,
+
+html:not([data-my-theme="default"])
+.nav-wrap-inner {
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--nav-bg-1),
+      var(--nav-bg-2)
+    ) !important;
+}
+
+
+/*
+ * 사이트에 nav-bg가 따로 깔려있으면
+ * 이것도 같이 변경
+ */
+html:not([data-my-theme="default"])
+.nav-bg {
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--nav-bg-1),
+      var(--nav-bg-2)
+    ) !important;
+}
+
+
+/* =========================
+   MY / Phase I / Phase II ...
+   ========================= */
+
+html:not([data-my-theme="default"])
+#topMenuListAdd
+> .depth-1
+> .link-text {
+
+  color:
+    var(--nav-text) !important;
+
+}
+
+
+/* 마우스 올렸을 때 */
+html:not([data-my-theme="default"])
+#topMenuListAdd
+> .depth-1
+> .link-text:hover {
+
+  background:
+    var(--nav-hover) !important;
+
+}
+
+
+/* =========================
+   펼쳐지는 하위 메뉴
+   ========================= */
+
+html:not([data-my-theme="default"])
+#topMenuListAdd
+.sub-menu-list-wrap {
+
+  background:
+    var(--nav-sub-bg) !important;
+
+  border-color:
+    rgba(0,0,0,.08) !important;
+
+  box-shadow:
+    0 8px 22px
+    rgba(0,0,0,.12) !important;
+
+}
+
+
+/* 하위 메뉴 글자 */
+html:not([data-my-theme="default"])
+#topMenuListAdd
+.depth-2
+> .link-text {
+
+  color:
+    var(--nav-sub-text) !important;
+
+}
+
+
+/* 하위 메뉴 hover */
+html:not([data-my-theme="default"])
+#topMenuListAdd
+.depth-2
+> .link-text:hover {
+
+  background:
+    var(--nav-sub-hover) !important;
+
+  color:
+    var(--nav-bg-1) !important;
+
+}
+
+
+/* =========================
+   삼각형 ▼
+   ========================= */
+
+html:not([data-my-theme="default"])
+#topMenuListAdd
+.depth-1
+.triangle {
+
+  border-top-color:
+    var(--nav-text) !important;
+
+}
   /* ===================================
      페이지 전체
      =================================== */
