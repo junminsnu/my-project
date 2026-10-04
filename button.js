@@ -485,52 +485,93 @@ window.addEventListener('resize', () => {
    5. 프로필 사진 후광 효과
    ========================= */
 
+/* =========================
+   5. 회전하는 프로필 오로라
+   ========================= */
+
 const profileImg = document.querySelector('[data-name="profileImg"]');
 
-if (profileImg) {
+if (profileImg && !document.querySelector('#profile-aura')) {
 
-  // 애니메이션 CSS 생성
-  const glowStyle = document.createElement('style');
+  const aura = document.createElement('div');
+  aura.id = 'profile-aura';
 
-  glowStyle.textContent = `
-    @keyframes profileGlow {
-      0% {
-        box-shadow:
-          0 0 0 3px rgba(99, 102, 241, .18),
-          0 0 10px rgba(59, 130, 246, .35),
-          0 0 20px rgba(124, 58, 237, .25);
+  // 프로필 사진을 감싸는 부모 기준
+  const parent = profileImg.parentElement;
+
+  if (parent) {
+
+    parent.style.position = 'relative';
+
+    Object.assign(aura.style, {
+      position: 'absolute',
+
+      // 사진보다 약간 크게
+      width: `${profileImg.offsetWidth + 18}px`,
+      height: `${profileImg.offsetHeight + 18}px`,
+
+      left: `${profileImg.offsetLeft - 9}px`,
+      top: `${profileImg.offsetTop - 9}px`,
+
+      borderRadius: '50%',
+
+      background: `
+        conic-gradient(
+          from 0deg,
+          #60a5fa,
+          #8b5cf6,
+          #ec4899,
+          #f472b6,
+          #8b5cf6,
+          #60a5fa
+        )
+      `,
+
+      filter: 'blur(8px)',
+      opacity: '0.65',
+
+      zIndex: '0',
+      pointerEvents: 'none'
+    });
+
+    profileImg.style.position = 'relative';
+    profileImg.style.zIndex = '1';
+    profileImg.style.borderRadius = '50%';
+
+    parent.insertBefore(aura, profileImg);
+
+
+    // 애니메이션 CSS
+    const style = document.createElement('style');
+
+    style.textContent = `
+      @keyframes profileAuraSpin {
+        0% {
+          transform: rotate(0deg) scale(0.95);
+          opacity: .45;
+        }
+
+        50% {
+          transform: rotate(180deg) scale(1.08);
+          opacity: .8;
+        }
+
+        100% {
+          transform: rotate(360deg) scale(0.95);
+          opacity: .45;
+        }
       }
 
-      35% {
-        box-shadow:
-          0 0 0 5px rgba(124, 58, 237, .22),
-          0 0 18px rgba(124, 58, 237, .55),
-          0 0 32px rgba(236, 72, 153, .30);
+      #profile-aura {
+        animation:
+          profileAuraSpin
+          4s
+          linear
+          infinite;
       }
+    `;
 
-      70% {
-        box-shadow:
-          0 0 0 4px rgba(236, 72, 153, .20),
-          0 0 16px rgba(236, 72, 153, .45),
-          0 0 30px rgba(59, 130, 246, .30);
-      }
-
-      100% {
-        box-shadow:
-          0 0 0 3px rgba(99, 102, 241, .18),
-          0 0 10px rgba(59, 130, 246, .35),
-          0 0 20px rgba(124, 58, 237, .25);
-      }
-    }
-
-    [data-name="profileImg"] {
-      border-radius: 50% !important;
-      animation: profileGlow 3s ease-in-out infinite;
-      position: relative;
-      z-index: 2;
-    }
-  `;
-
-  document.head.appendChild(glowStyle);
+    document.head.appendChild(style);
+  }
 }
 })();
