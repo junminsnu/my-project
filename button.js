@@ -573,4 +573,106 @@ style.textContent = `
     document.head.appendChild(style);
   }
 }
+  /* =========================
+   프로필 사진 / 응원문구 클릭 이동 막기
+   ========================= */
+
+document.addEventListener('click', e => {
+  const target = e.target.closest(
+    '[data-name="profileImg"], [data-name="my_word"]'
+  );
+
+  if (!target) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+}, true);
+  /* =========================
+   프로필 사진 3D 틸트 효과
+   ========================= */
+
+const tiltStyle = document.createElement('style');
+
+tiltStyle.textContent = `
+  [data-name="profileImg"] {
+    transform-style: preserve-3d;
+    transition:
+      transform .15s ease-out,
+      filter .2s ease-out;
+    will-change: transform;
+  }
+
+  [data-name="profileImg"]:hover {
+    filter:
+      brightness(1.05)
+      drop-shadow(0 8px 12px rgba(0,0,0,.18));
+  }
+`;
+
+document.head.appendChild(tiltStyle);
+
+
+// 마우스가 프사 위에서 움직일 때
+document.addEventListener('mousemove', e => {
+
+  const img = e.target.closest(
+    '[data-name="profileImg"]'
+  );
+
+  if (!img) return;
+
+  const rect = img.getBoundingClientRect();
+
+  // 사진 중심 기준 -1 ~ 1
+  const x =
+    (e.clientX - rect.left) / rect.width - 0.5;
+
+  const y =
+    (e.clientY - rect.top) / rect.height - 0.5;
+
+
+  // 기울기 강도
+  const maxRotate = 12;
+
+  const rotateY =
+    x * maxRotate * 2;
+
+  const rotateX =
+    -y * maxRotate * 2;
+
+
+  img.style.transform = `
+    perspective(500px)
+    rotateX(${rotateX}deg)
+    rotateY(${rotateY}deg)
+    translateZ(8px)
+    scale(1.04)
+  `;
+});
+
+
+// 프사에서 마우스가 빠져나가면 원위치
+document.addEventListener('mouseout', e => {
+
+  const img = e.target.closest(
+    '[data-name="profileImg"]'
+  );
+
+  if (!img) return;
+
+  // 같은 프사 내부로 이동한 건 무시
+  if (
+    e.relatedTarget &&
+    img.contains(e.relatedTarget)
+  ) return;
+
+
+  img.style.transform = `
+    perspective(500px)
+    rotateX(0deg)
+    rotateY(0deg)
+    translateZ(0)
+    scale(1)
+  `;
+});
 })();
