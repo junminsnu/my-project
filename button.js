@@ -5,15 +5,65 @@
 
   /* =========================
      1. 프로필 위 바로가기 버튼
+
+     - 바로가기 이름 / 주소 수정, 추가, 삭제
+     - 드래그로 순서 변경
+     - 설정은 localStorage 저장
      ========================= */
 
-const links = [
-  ['📝 일실기', '/st/clinical-training/day-practice'],
-  ['📅 주실기', '/st/clinical-training/week-plan'],
-  ['✨ 최종성찰', '/st/clinical-training/final-ref'],
-  ['🏥 외래예진기록', '/st/clinical-training/outpatient/field-final'],
-  ['👀 외래참관', '/st/clinical-training/outpatient/observation']
-];
+  const SHORTCUT_STORAGE_KEY =
+    'my-uportfolio-shortcuts-v1';
+
+  const DEFAULT_SHORTCUTS = [
+    { text: '📝 일실기', href: '/st/clinical-training/day-practice' },
+    { text: '📅 주실기', href: '/st/clinical-training/week-plan' },
+    { text: '✨ 최종성찰', href: '/st/clinical-training/final-ref' },
+    { text: '🏥 외래예진기록', href: '/st/clinical-training/outpatient/field-final' },
+    { text: '👀 외래참관', href: '/st/clinical-training/outpatient/observation' }
+  ];
+
+  function normalizeShortcutHref(value) {
+    const href = String(value || '').trim() || '/';
+
+    // javascript: 주소는 실수로 넣어도 실행되지 않게 차단
+    if (/^javascript\s*:/i.test(href)) {
+      return '#';
+    }
+
+    return href;
+  }
+
+  function loadShortcuts() {
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(SHORTCUT_STORAGE_KEY) || 'null'
+      );
+
+      if (Array.isArray(parsed) && parsed.length) {
+        const cleaned = parsed
+          .map(item => ({
+            text: String(item?.text || '').trim(),
+            href: normalizeShortcutHref(item?.href)
+          }))
+          .filter(item => item.text);
+
+        if (cleaned.length) return cleaned;
+      }
+    } catch (e) {}
+
+    return DEFAULT_SHORTCUTS.map(item => ({ ...item }));
+  }
+
+  let shortcuts = loadShortcuts();
+
+  function saveShortcuts() {
+    try {
+      localStorage.setItem(
+        SHORTCUT_STORAGE_KEY,
+        JSON.stringify(shortcuts)
+      );
+    } catch (e) {}
+  }
 
   const box = document.createElement('div');
   box.id = 'profile-shortcuts';
@@ -25,111 +75,188 @@ const links = [
     marginBottom: '12px'
   });
 
-  links.forEach(([text, href]) => {
-    const a = document.createElement('a');
 
-    a.href = href;
-    a.textContent = text;
+  /* =========================
+     색상 변경 버튼
+     ========================= */
 
-    Object.assign(a.style, {
-      display: 'block',
-      padding: '11px 6px',
-      borderRadius: '10px',
-      background: 'linear-gradient(135deg,#2563eb,#7c3aed)',
-      color: '#fff',
-      textAlign: 'center',
-      textDecoration: 'none',
-      fontWeight: '700',
-      fontSize: '13px',
-      boxShadow: '0 3px 10px #0002',
-      transition: '.15s'
-    });
+  const themeShortcut = document.createElement('button');
 
-    a.onmouseenter = () => {
-      a.style.transform = 'translateY(-2px)';
-      a.style.boxShadow = '0 5px 14px #0003';
-    };
+  themeShortcut.type = 'button';
+  themeShortcut.textContent = '🎨 색상 변경';
 
-    a.onmouseleave = () => {
-      a.style.transform = '';
-      a.style.boxShadow = '0 3px 10px #0002';
-    };
-
-    box.appendChild(a);
+  Object.assign(themeShortcut.style, {
+    display: 'block',
+    width: '100%',
+    padding: '11px 6px',
+    border: '0',
+    borderRadius: '10px',
+    background: 'linear-gradient(135deg,#2563eb,#3b82f6)',
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: '700',
+    fontSize: '13px',
+    boxShadow: '0 3px 10px #0002',
+    cursor: 'pointer',
+    transition: '.15s'
   });
-/* =========================
-   빈자리 → 색상 변경 버튼
-   ========================= */
 
-const themeShortcut = document.createElement('button');
+  themeShortcut.onmouseenter = () => {
+    themeShortcut.style.transform = 'translateY(-2px)';
+    themeShortcut.style.boxShadow = '0 5px 14px #0003';
+  };
 
-themeShortcut.type = 'button';
-themeShortcut.textContent = '🎨 색상 변경';
+  themeShortcut.onmouseleave = () => {
+    themeShortcut.style.transform = '';
+    themeShortcut.style.boxShadow = '0 3px 10px #0002';
+  };
 
-Object.assign(themeShortcut.style, {
-  display: 'block',
-  width: '100%',
-  padding: '11px 6px',
-  border: '0',
-  borderRadius: '10px',
-
-  background:
-    'linear-gradient(135deg,#2563eb,#3b82f6)',
-
-  color: '#fff',
-  textAlign: 'center',
-  fontWeight: '700',
-  fontSize: '13px',
-
-  boxShadow: '0 3px 10px #0002',
-
-  cursor: 'pointer',
-
-  transition: '.15s'
-});
-
-
-themeShortcut.onmouseenter = () => {
-  themeShortcut.style.transform =
-    'translateY(-2px)';
-
-  themeShortcut.style.boxShadow =
-    '0 5px 14px #0003';
-};
-
-
-themeShortcut.onmouseleave = () => {
-  themeShortcut.style.transform = '';
-
-  themeShortcut.style.boxShadow =
-    '0 3px 10px #0002';
-};
-
-
-/*
- * 누르면 기존 🎨 테마 선택창 열기
- */
-themeShortcut.addEventListener(
-  'click',
-  e => {
-
+  themeShortcut.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
 
-    const panel =
-      document.querySelector(
-        '#my-theme-panel'
-      );
-
+    const panel = document.querySelector('#my-theme-panel');
     if (!panel) return;
 
     panel.classList.toggle('open');
+  });
 
+
+  /* =========================
+     바로가기 편집 버튼
+     ========================= */
+
+  const shortcutEditButton = document.createElement('button');
+  shortcutEditButton.type = 'button';
+  shortcutEditButton.textContent = '✏️ 바로가기 편집';
+
+  Object.assign(shortcutEditButton.style, {
+    gridColumn: '1 / -1',
+    display: 'block',
+    width: '100%',
+    padding: '10px 6px',
+    border: '0',
+    borderRadius: '10px',
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: '700',
+    fontSize: '13px',
+    cursor: 'pointer',
+    transition: '.15s'
+  });
+
+  box.appendChild(themeShortcut);
+  box.appendChild(shortcutEditButton);
+
+
+  /* =========================
+     바로가기 렌더링 + 드래그 정렬
+     ========================= */
+
+  let draggingShortcutIndex = null;
+  let shortcutDragFinishedAt = 0;
+
+  function moveShortcut(fromIndex, toIndex) {
+    if (
+      fromIndex === null ||
+      fromIndex === toIndex ||
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= shortcuts.length ||
+      toIndex >= shortcuts.length
+    ) return;
+
+    const [moved] = shortcuts.splice(fromIndex, 1);
+    shortcuts.splice(toIndex, 0, moved);
+
+    saveShortcuts();
+    renderShortcuts();
   }
-);
 
+  function renderShortcuts() {
+    box
+      .querySelectorAll('.my-user-shortcut')
+      .forEach(el => el.remove());
 
-box.appendChild(themeShortcut);
+    shortcuts.forEach((item, index) => {
+      const a = document.createElement('a');
+
+      a.className = 'my-user-shortcut';
+      a.href = normalizeShortcutHref(item.href);
+      a.textContent = item.text;
+      a.draggable = true;
+      a.dataset.shortcutIndex = String(index);
+      a.title = '드래그해서 순서 변경';
+
+      Object.assign(a.style, {
+        display: 'block',
+        padding: '11px 6px',
+        borderRadius: '10px',
+        background: 'linear-gradient(135deg,#2563eb,#7c3aed)',
+        color: '#fff',
+        textAlign: 'center',
+        textDecoration: 'none',
+        fontWeight: '700',
+        fontSize: '13px',
+        boxShadow: '0 3px 10px #0002',
+        transition: '.15s',
+        cursor: 'grab'
+      });
+
+      a.onmouseenter = () => {
+        a.style.transform = 'translateY(-2px)';
+        a.style.boxShadow = '0 5px 14px #0003';
+      };
+
+      a.onmouseleave = () => {
+        a.style.transform = '';
+        a.style.boxShadow = '0 3px 10px #0002';
+      };
+
+      a.addEventListener('click', e => {
+        // 드래그 직후 링크가 눌리는 현상 방지
+        if (Date.now() - shortcutDragFinishedAt < 350) {
+          e.preventDefault();
+        }
+      });
+
+      a.addEventListener('dragstart', e => {
+        draggingShortcutIndex = Number(a.dataset.shortcutIndex);
+        a.style.opacity = '.55';
+
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', String(draggingShortcutIndex));
+        }
+      });
+
+      a.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (e.dataTransfer) {
+          e.dataTransfer.dropEffect = 'move';
+        }
+      });
+
+      a.addEventListener('drop', e => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const targetIndex = Number(a.dataset.shortcutIndex);
+        moveShortcut(draggingShortcutIndex, targetIndex);
+      });
+
+      a.addEventListener('dragend', () => {
+        draggingShortcutIndex = null;
+        shortcutDragFinishedAt = Date.now();
+        a.style.opacity = '';
+      });
+
+      box.insertBefore(a, themeShortcut);
+    });
+  }
+
+  renderShortcuts();
+
   const profile = document.querySelector('.main-profile');
 
   if (profile && !document.querySelector('#profile-shortcuts')) {
@@ -138,10 +265,322 @@ box.appendChild(themeShortcut);
 
 
   /* =========================
+     바로가기 편집창
+     ========================= */
+
+  const shortcutEditorStyle = document.createElement('style');
+  shortcutEditorStyle.textContent = `
+    #my-shortcut-editor-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 10000020;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0,0,0,.35);
+    }
+
+    #my-shortcut-editor-backdrop.open {
+      display: flex;
+    }
+
+    #my-shortcut-editor {
+      width: min(720px, 96vw);
+      max-height: 82vh;
+      overflow: auto;
+      padding: 16px;
+      border: 1px solid var(--my-border, #dae6f5);
+      border-radius: 16px;
+      background: var(--my-card, #fff);
+      color: var(--my-text, #293748);
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      font-family: Arial, sans-serif;
+    }
+
+    #my-shortcut-editor h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    #my-shortcut-editor .editor-guide {
+      margin: 0 0 12px;
+      color: var(--my-subtext, #718096);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    #my-shortcut-editor-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .my-shortcut-editor-row {
+      display: grid;
+      grid-template-columns: 28px minmax(120px,.8fr) minmax(180px,1.4fr) 34px;
+      gap: 7px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid var(--my-border, #dae6f5);
+      border-radius: 10px;
+      background: var(--my-card-2, #f1f6ff);
+    }
+
+    .my-shortcut-drag-handle {
+      cursor: grab;
+      text-align: center;
+      user-select: none;
+      font-size: 17px;
+    }
+
+    .my-shortcut-editor-row input {
+      min-width: 0;
+      box-sizing: border-box;
+      width: 100%;
+      padding: 8px 9px;
+      border: 1px solid var(--my-border, #dae6f5);
+      border-radius: 8px;
+      background: var(--my-card, #fff) !important;
+      color: var(--my-text, #293748) !important;
+      font-size: 12px;
+    }
+
+    .my-shortcut-delete {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 0;
+      border-radius: 8px;
+      background: #ef4444 !important;
+      color: #fff !important;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .my-shortcut-editor-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .my-shortcut-editor-actions button {
+      padding: 9px 12px;
+      border: 1px solid var(--my-border, #dae6f5);
+      border-radius: 9px;
+      background: var(--my-card-2, #f1f6ff);
+      color: var(--my-text, #293748);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .my-shortcut-editor-actions .primary {
+      margin-left: auto;
+      border-color: var(--my-accent, #2563eb);
+      background: var(--my-accent, #2563eb);
+      color: #fff;
+    }
+
+    @media (max-width: 620px) {
+      .my-shortcut-editor-row {
+        grid-template-columns: 26px 1fr 32px;
+      }
+
+      .my-shortcut-editor-row .my-shortcut-url {
+        grid-column: 2 / 4;
+      }
+    }
+  `;
+  document.head.appendChild(shortcutEditorStyle);
+
+  const shortcutEditorBackdrop = document.createElement('div');
+  shortcutEditorBackdrop.id = 'my-shortcut-editor-backdrop';
+
+  const shortcutEditor = document.createElement('div');
+  shortcutEditor.id = 'my-shortcut-editor';
+
+  const shortcutEditorTitle = document.createElement('h3');
+  shortcutEditorTitle.textContent = '바로가기 편집';
+
+  const shortcutEditorGuide = document.createElement('p');
+  shortcutEditorGuide.className = 'editor-guide';
+  shortcutEditorGuide.textContent =
+    '이름과 주소를 수정할 수 있어요. 행을 드래그하면 순서가 바뀌고, 저장하면 다음 접속에도 유지됩니다.';
+
+  const shortcutEditorList = document.createElement('div');
+  shortcutEditorList.id = 'my-shortcut-editor-list';
+
+  const shortcutEditorActions = document.createElement('div');
+  shortcutEditorActions.className = 'my-shortcut-editor-actions';
+
+  const shortcutAddButton = document.createElement('button');
+  shortcutAddButton.type = 'button';
+  shortcutAddButton.textContent = '➕ 추가';
+
+  const shortcutCancelButton = document.createElement('button');
+  shortcutCancelButton.type = 'button';
+  shortcutCancelButton.textContent = '취소';
+
+  const shortcutSaveButton = document.createElement('button');
+  shortcutSaveButton.type = 'button';
+  shortcutSaveButton.className = 'primary';
+  shortcutSaveButton.textContent = '저장';
+
+  shortcutEditorActions.append(
+    shortcutAddButton,
+    shortcutCancelButton,
+    shortcutSaveButton
+  );
+
+  shortcutEditor.append(
+    shortcutEditorTitle,
+    shortcutEditorGuide,
+    shortcutEditorList,
+    shortcutEditorActions
+  );
+
+  shortcutEditorBackdrop.appendChild(shortcutEditor);
+  document.body.appendChild(shortcutEditorBackdrop);
+
+  let shortcutDraft = [];
+  let editorDraggingIndex = null;
+
+  function renderShortcutEditor() {
+    shortcutEditorList.textContent = '';
+
+    shortcutDraft.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'my-shortcut-editor-row';
+      row.draggable = true;
+      row.dataset.index = String(index);
+
+      const handle = document.createElement('div');
+      handle.className = 'my-shortcut-drag-handle';
+      handle.textContent = '☰';
+      handle.title = '드래그해서 순서 변경';
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.value = item.text;
+      nameInput.placeholder = '버튼 이름';
+      nameInput.addEventListener('input', () => {
+        shortcutDraft[index].text = nameInput.value;
+      });
+
+      const urlInput = document.createElement('input');
+      urlInput.type = 'text';
+      urlInput.className = 'my-shortcut-url';
+      urlInput.value = item.href;
+      urlInput.placeholder = '/주소 또는 https://...';
+      urlInput.addEventListener('input', () => {
+        shortcutDraft[index].href = urlInput.value;
+      });
+
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.className = 'my-shortcut-delete';
+      deleteButton.textContent = '×';
+      deleteButton.title = '삭제';
+      deleteButton.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        shortcutDraft.splice(index, 1);
+        renderShortcutEditor();
+      });
+
+      row.addEventListener('dragstart', e => {
+        editorDraggingIndex = index;
+        row.style.opacity = '.55';
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+        }
+      });
+
+      row.addEventListener('dragover', e => {
+        e.preventDefault();
+      });
+
+      row.addEventListener('drop', e => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const toIndex = Number(row.dataset.index);
+        if (
+          editorDraggingIndex === null ||
+          editorDraggingIndex === toIndex
+        ) return;
+
+        const [moved] = shortcutDraft.splice(editorDraggingIndex, 1);
+        shortcutDraft.splice(toIndex, 0, moved);
+        editorDraggingIndex = null;
+        renderShortcutEditor();
+      });
+
+      row.addEventListener('dragend', () => {
+        editorDraggingIndex = null;
+        row.style.opacity = '';
+      });
+
+      row.append(handle, nameInput, urlInput, deleteButton);
+      shortcutEditorList.appendChild(row);
+    });
+  }
+
+  function openShortcutEditor() {
+    shortcutDraft = shortcuts.map(item => ({ ...item }));
+    renderShortcutEditor();
+    shortcutEditorBackdrop.classList.add('open');
+  }
+
+  function closeShortcutEditor() {
+    shortcutEditorBackdrop.classList.remove('open');
+  }
+
+  shortcutEditButton.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    openShortcutEditor();
+  });
+
+  shortcutAddButton.addEventListener('click', () => {
+    shortcutDraft.push({
+      text: '새 바로가기',
+      href: '/'
+    });
+    renderShortcutEditor();
+  });
+
+  shortcutCancelButton.addEventListener('click', closeShortcutEditor);
+
+  shortcutSaveButton.addEventListener('click', () => {
+    const cleaned = shortcutDraft
+      .map(item => ({
+        text: String(item.text || '').trim(),
+        href: normalizeShortcutHref(item.href)
+      }))
+      .filter(item => item.text);
+
+    shortcuts = cleaned.length
+      ? cleaned
+      : DEFAULT_SHORTCUTS.map(item => ({ ...item }));
+
+    saveShortcuts();
+    renderShortcuts();
+    closeShortcutEditor();
+  });
+
+  shortcutEditorBackdrop.addEventListener('click', e => {
+    if (e.target === shortcutEditorBackdrop) {
+      closeShortcutEditor();
+    }
+  });
+
+  /* =========================
      2. 프로필 이름 커스텀
 
      - 학번 (숫자) 자동 제거
-     - 기본 이름이 민유진이면 "유지니"로 표시
+     - 기본 이름이 민유진이면 "🐰 유지니"로 표시
      - 이름 클릭 → 바로 수정
      - Enter / 포커스 해제 → localStorage 저장
      - Esc → 수정 취소
@@ -169,8 +608,8 @@ box.appendChild(themeShortcut);
 
     defaultProfileName =
       originalName === '민유진'
-        ? '유지니'
-        : (originalName || '유지니');
+        ? '🐰 유지니'
+        : (originalName || '🐰 유지니');
 
     let savedName = '';
 
@@ -181,6 +620,18 @@ box.appendChild(themeShortcut);
         ) || ''
       );
     } catch (e) {}
+
+    // 이전 버전의 기본값 "유지니"는 새 기본값으로 자동 마이그레이션
+    if (savedName === '유지니') {
+      savedName = '🐰 유지니';
+
+      try {
+        localStorage.setItem(
+          PROFILE_NAME_STORAGE_KEY,
+          savedName
+        );
+      } catch (e) {}
+    }
 
     customProfileName = savedName || defaultProfileName;
     profileNameInitialized = true;
@@ -198,7 +649,7 @@ box.appendChild(themeShortcut);
 
   function saveCustomProfileName(name) {
     const cleaned =
-      stripStudentNumber(name) || defaultProfileName || '유지니';
+      stripStudentNumber(name) || defaultProfileName || '🐰 유지니';
 
     customProfileName = cleaned;
 
@@ -345,41 +796,243 @@ box.appendChild(themeShortcut);
 
 
   /* =========================
-     3. 시간대별 my_word 문구
+     3. D-Day 표시
 
-     start = 시작 시간
-     end   = 끝 시간
-     text  = 실제 화면에 표시되는 문구
-
-     start/end 숫자는 화면에 안 뜸
+     - 프로필 정보 아래에 표시
+     - 클릭해서 제목 / 날짜 수정
+     - localStorage 저장
      ========================= */
 
-  const messages = [
-    { start: 0,  end: 4,  text: '조금만 더하고 빨리자 ㅎㅎ 사랑해🐰❣️' },
-    { start: 4,  end: 11,  text: '오늘 하루도 힘내💗' },
-    { start: 11,  end: 13,  text: '점심 잘머거💗' },
+  const DDAY_STORAGE_KEY =
+    'my-uportfolio-dday-v1';
 
-    { start: 13,  end: 16,  text: '좋은 오후 보내🧡' },
-    { start: 16,  end: 23, text: '오늘 하루도 수고했어🤍' },
-    { start: 23, end: 24, text: '오늘은 여기까지 해도 충분해 💗😴🤍 잘자' },
-  ];
+  let ddayData = null;
+
+  function loadDday() {
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(DDAY_STORAGE_KEY) || 'null'
+      );
+
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        /^\d{4}-\d{2}-\d{2}$/.test(String(parsed.date || ''))
+      ) {
+        return {
+          title: String(parsed.title || 'D-Day').trim() || 'D-Day',
+          date: String(parsed.date)
+        };
+      }
+    } catch (e) {}
+
+    return null;
+  }
+
+  ddayData = loadDday();
+
+  function saveDday() {
+    try {
+      if (ddayData) {
+        localStorage.setItem(
+          DDAY_STORAGE_KEY,
+          JSON.stringify(ddayData)
+        );
+      } else {
+        localStorage.removeItem(DDAY_STORAGE_KEY);
+      }
+    } catch (e) {}
+  }
+
+  function getDdayText() {
+    if (!ddayData) return '📅 D-Day 설정';
+
+    const [year, month, day] = ddayData.date
+      .split('-')
+      .map(Number);
+
+    if (!year || !month || !day) {
+      return '📅 D-Day 설정';
+    }
+
+    const now = new Date();
+    const todayUtc = Date.UTC(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+
+    const targetUtc = Date.UTC(
+      year,
+      month - 1,
+      day
+    );
+
+    const diff = Math.round(
+      (targetUtc - todayUtc) / 86400000
+    );
+
+    let label = 'D-DAY';
+
+    if (diff > 0) label = `D-${diff}`;
+    if (diff < 0) label = `D+${Math.abs(diff)}`;
+
+    return `📅 ${ddayData.title} ${label}`;
+  }
+
+  function ensureDday() {
+    const userBox = document.querySelector(
+      '.main-profile .user'
+    );
+
+    if (!userBox) return;
+
+    let el = userBox.querySelector('#my-dday');
+
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'my-dday';
+      el.title = '클릭해서 D-Day 설정';
+
+      Object.assign(el.style, {
+        display: 'inline-block',
+        margin: '7px 0 0',
+        padding: '5px 9px',
+        border: '1px solid var(--my-border, #dae6f5)',
+        borderRadius: '999px',
+        background: 'var(--my-card-2, #f1f6ff)',
+        color: 'var(--my-text, #293748)',
+        fontSize: '12px',
+        fontWeight: '700',
+        cursor: 'pointer',
+        lineHeight: '1.35'
+      });
+
+      userBox.appendChild(el);
+    }
+
+    const currentText = getDdayText();
+    if (el.textContent !== currentText) {
+      el.textContent = currentText;
+    }
+  }
+
+  function editDday() {
+    const currentDate = ddayData?.date || '';
+
+    const date = window.prompt(
+      'D-Day 날짜를 YYYY-MM-DD 형식으로 입력해 주세요.\n비워서 확인하면 D-Day를 삭제합니다.',
+      currentDate
+    );
+
+    if (date === null) return;
+
+    const cleanedDate = date.trim();
+
+    if (!cleanedDate) {
+      ddayData = null;
+      saveDday();
+      ensureDday();
+      return;
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanedDate)) {
+      window.alert('날짜는 YYYY-MM-DD 형식으로 입력해 주세요.');
+      return;
+    }
+
+    const [year, month, day] = cleanedDate.split('-').map(Number);
+    const testDate = new Date(year, month - 1, day);
+
+    if (
+      testDate.getFullYear() !== year ||
+      testDate.getMonth() !== month - 1 ||
+      testDate.getDate() !== day
+    ) {
+      window.alert('존재하는 날짜를 입력해 주세요.');
+      return;
+    }
+
+    const title = window.prompt(
+      'D-Day 이름을 입력해 주세요.',
+      ddayData?.title || '시험'
+    );
+
+    if (title === null) return;
+
+    ddayData = {
+      title: title.trim() || 'D-Day',
+      date: cleanedDate
+    };
+
+    saveDday();
+    ensureDday();
+  }
+
+  ensureDday();
+  setInterval(ensureDday, 1000);
+
+  document.addEventListener(
+    'click',
+    e => {
+      const dday = e.target.closest?.('#my-dday');
+      if (!dday) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      editDday();
+    },
+    true
+  );
 
 
   /* =========================
-     3. 현재 시간에 맞는 문구 표시
+     4. 요일별 응원 문구
+
+     금요일 오전 = 00:00 ~ 11:59
+     금요일 오후부터 일요일까지 = 주말 문구
      ========================= */
 
-/* =========================
-   3. 응원 문구 좀비 복구 시스템
-   ========================= */
+  function getCurrentMessage() {
+    const now = new Date();
+    const day = now.getDay();
+    const hour = now.getHours();
 
-function getCurrentMessage() {
-  const hour = new Date().getHours();
+    if (day === 1) {
+      return {
+        text: '이번 주 케이스는 잘 받았어?? 천천히 시작해🤍'
+      };
+    }
 
-  return messages.find(
-    x => hour >= x.start && hour < x.end
-  );
-}
+    if (day === 2) {
+      return {
+        text: '금요일까지 사흘이나 남았어 ㅎㅎ 아직 여유 있어🩵'
+      };
+    }
+
+    if (day === 3) {
+      return {
+        text: '벌써 한주의 절반이나 왔네 조금만 더힘내💓'
+      };
+    }
+
+    if (day === 4) {
+      return {
+        text: '내일이네 ㅎㅎ 딱 하루만 더 힘내!!!🐰'
+      };
+    }
+
+    if (day === 5 && hour < 12) {
+      return {
+        text: '열심히한만큼 잘 될거야🧡'
+      };
+    }
+
+    // 금요일 오후 + 토요일 + 일요일
+    return {
+      text: '주말은 푹셔🤍'
+    };
+  }
 
 
 function injectMyWord() {
@@ -459,7 +1112,7 @@ setInterval(injectMyWord, 500);
 
 // 창 크기 변경 시에도 즉시 복구
 window.addEventListener('resize', injectMyWord);/* =========================
-   4. 계속 돌아다니는 생쥐 🐭
+   5. 계속 돌아다니는 생쥐 🐭
    - 생쥐 클릭 → 즉시 숨김
    - 숨김 상태는 localStorage에 저장
    ========================= */
@@ -521,6 +1174,27 @@ mouse.addEventListener('click', e => {
 });
 
 
+// 테마 창의 "생쥐 다시 부르기"에서 사용
+function showMouseAgain() {
+  mouseHidden = false;
+  mouse.style.display = 'block';
+
+  // 다시 부를 때 화면 중앙 근처에서 재시작
+  x = window.innerWidth * 0.5;
+  y = window.innerHeight * 0.5;
+  vx = 0;
+  vy = 0;
+  wanderAngle = Math.random() * Math.PI * 2;
+
+  try {
+    localStorage.setItem(
+      MOUSE_HIDDEN_STORAGE_KEY,
+      'false'
+    );
+  } catch (e) {}
+}
+
+
 // =========================
 // 현재 상태
 // =========================
@@ -576,9 +1250,6 @@ document.addEventListener('mousemove', e => {
 // 0.4~1.4초마다 살짝 방향 변경
 function changeWanderDirection() {
 
-  // 숨겨진 뒤에는 타이머도 더 돌리지 않음
-  if (mouseHidden) return;
-
   // 현재 방향에서 랜덤하게 좌우 회전
   wanderAngle +=
     (Math.random() - 0.5) * Math.PI * 1.2;
@@ -589,9 +1260,7 @@ function changeWanderDirection() {
   setTimeout(changeWanderDirection, next);
 }
 
-if (!mouseHidden) {
-  changeWanderDirection();
-}
+changeWanderDirection();
 
 
 // =========================
@@ -600,8 +1269,12 @@ if (!mouseHidden) {
 
 function animateMouse() {
 
-  // 클릭해서 숨겨졌거나 저장된 숨김 상태면 종료
-  if (mouseHidden) return;
+  // 숨겨져 있어도 애니메이션 루프는 유지해서
+  // 나중에 "생쥐 다시 부르기"가 즉시 작동하게 함
+  if (mouseHidden) {
+    requestAnimationFrame(animateMouse);
+    return;
+  }
 
   const dx = x - cursorX;
   const dy = y - cursorY;
@@ -787,9 +1460,7 @@ function animateMouse() {
   requestAnimationFrame(animateMouse);
 }
 
-if (!mouseHidden) {
-  animateMouse();
-}
+animateMouse();
 
 
 // 창 크기 변경 대응
@@ -813,14 +1484,26 @@ window.addEventListener('resize', () => {
 });
 
   /* =========================
-   5. 프로필 사진 후광 효과
+   6. 프로필 사진 후광 효과
    ========================= */
 /* =========================
-   5. 프로필 오로라 + 시선 추적
+   6. 프로필 오로라 + 시선 추적
    ========================= */
 
-// 현재 오로라 상태
+// 현재 오로라 상태도 새로고침 후 유지
+const PROFILE_AURA_STORAGE_KEY =
+  'my-uportfolio-profile-aura-enabled';
+
 let profileAuraEnabled = true;
+
+try {
+  const savedAuraState =
+    localStorage.getItem(PROFILE_AURA_STORAGE_KEY);
+
+  if (savedAuraState !== null) {
+    profileAuraEnabled = savedAuraState !== 'false';
+  }
+} catch (e) {}
 
 // 현재 마우스 위치
 let profileCursorX = window.innerWidth / 2;
@@ -1259,6 +1942,13 @@ document.addEventListener(
       profileAuraEnabled =
         !profileAuraEnabled;
 
+      try {
+        localStorage.setItem(
+          PROFILE_AURA_STORAGE_KEY,
+          String(profileAuraEnabled)
+        );
+      } catch (e) {}
+
 
       const aura =
         ensureProfileAura()?.aura;
@@ -1368,7 +2058,7 @@ document.addEventListener(
   true
 );
   /* =========================
-   6. 전체 페이지 테마 변경 🎨
+   7. 전체 페이지 테마 변경 🎨
    기본 = 블루
    상단 네비게이션도 테마와 함께 변경
    ========================= */
@@ -2021,7 +2711,7 @@ themeStyle.textContent = `
     left: 0;
     bottom: 56px;
 
-    width: 164px;
+    width: 210px;
 
     padding: 10px;
 
@@ -2092,6 +2782,48 @@ themeStyle.textContent = `
     box-shadow:
       inset 0 0 0 1px
       var(--my-accent);
+  }
+
+
+  #my-theme-custom-wrap {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    gap: 7px;
+    align-items: center;
+    padding-top: 3px;
+  }
+
+  #my-theme-color-input {
+    width: 42px;
+    height: 34px;
+    padding: 2px !important;
+    border: 1px solid var(--my-border) !important;
+    border-radius: 8px;
+    background: var(--my-card-2) !important;
+    cursor: pointer;
+  }
+
+  #my-custom-theme-apply,
+  .my-theme-wide-action {
+    border: 1px solid var(--my-border);
+    border-radius: 9px;
+    padding: 8px 5px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--my-card-2);
+    color: var(--my-text);
+  }
+
+  .my-theme-wide-action {
+    grid-column: 1 / -1;
+  }
+
+  #my-dday {
+    border-color: var(--my-border) !important;
+    background: var(--my-card-2) !important;
+    color: var(--my-text) !important;
   }
 
 `;
@@ -2169,9 +2901,128 @@ const themes = [
     id: 'dark',
     name: '다크',
     icon: '🌙'
+  },
+
+  {
+    id: 'custom',
+    name: '나만의 색',
+    icon: '🎨'
   }
 
 ];
+
+
+/* =========================
+   나만의 테마 색상
+   ========================= */
+
+const CUSTOM_THEME_COLOR_STORAGE_KEY =
+  'my-uportfolio-custom-theme-color';
+
+const CUSTOM_THEME_VARIABLES = [
+  '--my-bg',
+  '--my-card',
+  '--my-card-2',
+  '--my-text',
+  '--my-subtext',
+  '--my-border',
+  '--my-accent',
+  '--my-accent-2',
+  '--my-soft',
+  '--my-shadow',
+  '--nav-bg-1',
+  '--nav-bg-2',
+  '--nav-text',
+  '--nav-hover',
+  '--nav-sub-bg',
+  '--nav-sub-text',
+  '--nav-sub-hover'
+];
+
+function normalizeHexColor(value) {
+  const text = String(value || '').trim();
+
+  if (/^#[0-9a-f]{6}$/i.test(text)) {
+    return text.toLowerCase();
+  }
+
+  return '#7c3aed';
+}
+
+function hexToRgb(hex) {
+  const clean = normalizeHexColor(hex).slice(1);
+
+  return {
+    r: parseInt(clean.slice(0, 2), 16),
+    g: parseInt(clean.slice(2, 4), 16),
+    b: parseInt(clean.slice(4, 6), 16)
+  };
+}
+
+function rgbToHex(r, g, b) {
+  const part = value =>
+    Math.max(0, Math.min(255, Math.round(value)))
+      .toString(16)
+      .padStart(2, '0');
+
+  return `#${part(r)}${part(g)}${part(b)}`;
+}
+
+function mixHex(colorA, colorB, amountToB) {
+  const a = hexToRgb(colorA);
+  const b = hexToRgb(colorB);
+  const p = Math.max(0, Math.min(1, amountToB));
+
+  return rgbToHex(
+    a.r + (b.r - a.r) * p,
+    a.g + (b.g - a.g) * p,
+    a.b + (b.b - a.b) * p
+  );
+}
+
+function getSavedCustomThemeColor() {
+  try {
+    return normalizeHexColor(
+      localStorage.getItem(CUSTOM_THEME_COLOR_STORAGE_KEY) ||
+      '#7c3aed'
+    );
+  } catch (e) {
+    return '#7c3aed';
+  }
+}
+
+function clearCustomThemeVariables() {
+  CUSTOM_THEME_VARIABLES.forEach(name => {
+    document.documentElement.style.removeProperty(name);
+  });
+}
+
+function applyCustomThemeVariables(color) {
+  const accent = normalizeHexColor(color);
+  const rgb = hexToRgb(accent);
+  const rootStyle = document.documentElement.style;
+
+  rootStyle.setProperty('--my-bg', mixHex(accent, '#ffffff', .93));
+  rootStyle.setProperty('--my-card', '#ffffff');
+  rootStyle.setProperty('--my-card-2', mixHex(accent, '#ffffff', .96));
+  rootStyle.setProperty('--my-text', '#293748');
+  rootStyle.setProperty('--my-subtext', '#718096');
+  rootStyle.setProperty('--my-border', mixHex(accent, '#ffffff', .78));
+  rootStyle.setProperty('--my-accent', accent);
+  rootStyle.setProperty('--my-accent-2', mixHex(accent, '#ffffff', .24));
+  rootStyle.setProperty('--my-soft', mixHex(accent, '#ffffff', .86));
+  rootStyle.setProperty(
+    '--my-shadow',
+    `0 4px 20px rgba(${rgb.r},${rgb.g},${rgb.b},.10)`
+  );
+  rootStyle.setProperty('--nav-bg-1', mixHex(accent, '#000000', .14));
+  rootStyle.setProperty('--nav-bg-2', mixHex(accent, '#ffffff', .18));
+  rootStyle.setProperty('--nav-text', '#ffffff');
+  rootStyle.setProperty('--nav-hover', 'rgba(255,255,255,.14)');
+  rootStyle.setProperty('--nav-sub-bg', '#ffffff');
+  rootStyle.setProperty('--nav-sub-text', '#293748');
+  rootStyle.setProperty('--nav-sub-hover', mixHex(accent, '#ffffff', .90));
+}
 
 
 /* =========================
@@ -2195,6 +3046,15 @@ function applyMyTheme(theme) {
     )
   ) {
     theme = 'blue';
+  }
+
+
+  if (theme === 'custom') {
+    applyCustomThemeVariables(
+      getSavedCustomThemeColor()
+    );
+  } else {
+    clearCustomThemeVariables();
   }
 
 
@@ -2282,6 +3142,96 @@ themes.forEach(theme => {
   );
 
 });
+
+
+/* =========================
+   나만의 색 선택기
+   ========================= */
+
+const customThemeWrap = document.createElement('div');
+customThemeWrap.id = 'my-theme-custom-wrap';
+
+const customThemeColorInput = document.createElement('input');
+customThemeColorInput.id = 'my-theme-color-input';
+customThemeColorInput.type = 'color';
+customThemeColorInput.value = getSavedCustomThemeColor();
+customThemeColorInput.title = '나만의 테마 색상';
+
+const customThemeApplyButton = document.createElement('button');
+customThemeApplyButton.id = 'my-custom-theme-apply';
+customThemeApplyButton.type = 'button';
+customThemeApplyButton.textContent = '이 색으로 적용';
+
+customThemeWrap.append(
+  customThemeColorInput,
+  customThemeApplyButton
+);
+
+themePanel.appendChild(customThemeWrap);
+
+function saveAndApplyCustomColor() {
+  const color = normalizeHexColor(
+    customThemeColorInput.value
+  );
+
+  try {
+    localStorage.setItem(
+      CUSTOM_THEME_COLOR_STORAGE_KEY,
+      color
+    );
+  } catch (e) {}
+
+  applyMyTheme('custom');
+}
+
+customThemeColorInput.addEventListener('input', e => {
+  e.stopPropagation();
+
+  const color = normalizeHexColor(
+    customThemeColorInput.value
+  );
+
+  try {
+    localStorage.setItem(
+      CUSTOM_THEME_COLOR_STORAGE_KEY,
+      color
+    );
+  } catch (e) {}
+
+  if (
+    document.documentElement.getAttribute('data-my-theme') ===
+    'custom'
+  ) {
+    applyCustomThemeVariables(color);
+  }
+});
+
+customThemeApplyButton.addEventListener('click', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  saveAndApplyCustomColor();
+  themePanel.classList.remove('open');
+});
+
+
+/* =========================
+   숨긴 생쥐 다시 부르기
+   ========================= */
+
+const restoreMouseButton = document.createElement('button');
+restoreMouseButton.type = 'button';
+restoreMouseButton.className = 'my-theme-wide-action';
+restoreMouseButton.textContent = '🐭 생쥐 다시 부르기';
+
+restoreMouseButton.addEventListener('click', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  showMouseAgain();
+  themePanel.classList.remove('open');
+});
+
+themePanel.appendChild(restoreMouseButton);
+
 
 
 themeButton.addEventListener(
