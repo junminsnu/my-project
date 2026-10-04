@@ -732,82 +732,105 @@ function animateProfileLook() {
       '[data-name="profileImg"]'
     );
 
-
   if (profileImg) {
 
     const rect =
       profileImg.getBoundingClientRect();
 
-
     const centerX =
-      rect.left +
-      rect.width / 2;
+      rect.left + rect.width / 2;
 
     const centerY =
-      rect.top +
-      rect.height / 2;
+      rect.top + rect.height / 2;
 
 
-    /*
-     * 프사 중심에서
-     * 마우스가 어느 방향에 있는지 계산
-     */
-    const dx =
-      profileCursorX - centerX;
-
-    const dy =
-      profileCursorY - centerY;
+    // 현재 커서가 프사 위에 있는지
+    const isHovering =
+      profileCursorX >= rect.left &&
+      profileCursorX <= rect.right &&
+      profileCursorY >= rect.top &&
+      profileCursorY <= rect.bottom;
 
 
-    /*
-     * 화면 크기로 나눠서
-     * -1 ~ 1 정도의 값으로 변환
-     */
-    const normalizedX =
-      dx /
-      (window.innerWidth / 2);
+    if (isHovering) {
 
-    const normalizedY =
-      dy /
-      (window.innerHeight / 2);
+      /* =========================
+         프사 위에 있을 때
+         강한 3D 틸트
+         ========================= */
 
+      // 프사 중심 기준 -1 ~ 1
+      const localX =
+        (
+          profileCursorX - centerX
+        ) / (rect.width / 2);
 
-    /*
-     * 최대 기울기
-     *
-     * 너무 크면 얼굴이 많이 돌아가므로
-     * 8~10 정도가 자연스러움
-     */
-    const maxRotate = 9;
+      const localY =
+        (
+          profileCursorY - centerY
+        ) / (rect.height / 2);
 
 
-    targetRotateY =
-      Math.max(
-        -maxRotate,
-        Math.min(
-          maxRotate,
-          normalizedX *
-          maxRotate
-        )
-      );
+      // 프사 위에서는 강하게
+      const hoverRotate = 18;
+
+      targetRotateY =
+        localX * hoverRotate;
+
+      targetRotateX =
+        -localY * hoverRotate;
+
+    } else {
+
+      /* =========================
+         프사 밖에 있을 때
+         화면 전체 시선 추적
+         ========================= */
+
+      const dx =
+        profileCursorX - centerX;
+
+      const dy =
+        profileCursorY - centerY;
 
 
-    targetRotateX =
-      Math.max(
-        -maxRotate,
-        Math.min(
-          maxRotate,
-          -normalizedY *
-          maxRotate
-        )
-      );
+      const normalizedX =
+        dx / (window.innerWidth / 2);
+
+      const normalizedY =
+        dy / (window.innerHeight / 2);
 
 
-    /*
-     * 현재값 → 목표값으로
-     * 서서히 따라가게 함
-     */
-    const smooth = 0.07;
+      // 평소에는 은은하게
+      const normalRotate = 9;
+
+      targetRotateY =
+        Math.max(
+          -normalRotate,
+          Math.min(
+            normalRotate,
+            normalizedX * normalRotate
+          )
+        );
+
+      targetRotateX =
+        Math.max(
+          -normalRotate,
+          Math.min(
+            normalRotate,
+            -normalizedY * normalRotate
+          )
+        );
+    }
+
+
+    /* =========================
+       부드럽게 목표 방향 따라가기
+       ========================= */
+
+    // hover 중에는 반응도 조금 더 빠르게
+    const smooth =
+      isHovering ? 0.16 : 0.07;
 
     currentRotateX +=
       (
@@ -822,15 +845,31 @@ function animateProfileLook() {
       ) * smooth;
 
 
-    /*
-     * 마우스 방향으로 아주 살짝
-     * 위치도 움직임
-     */
+    /* =========================
+       살짝 위치 이동
+       ========================= */
+
+    const moveStrength =
+      isHovering ? 0.28 : 0.18;
+
     const moveX =
-      currentRotateY * 0.18;
+      currentRotateY *
+      moveStrength;
 
     const moveY =
-      -currentRotateX * 0.18;
+      -currentRotateX *
+      moveStrength;
+
+
+    /* =========================
+       프사 위에서는 앞으로도 살짝 튀어나옴
+       ========================= */
+
+    const z =
+      isHovering ? 16 : 8;
+
+    const scale =
+      isHovering ? 1.055 : 1.025;
 
 
     profileImg.style.transform = `
@@ -839,7 +878,7 @@ function animateProfileLook() {
       translate3d(
         ${moveX}px,
         ${moveY}px,
-        8px
+        ${z}px
       )
 
       rotateX(
@@ -850,7 +889,7 @@ function animateProfileLook() {
         ${currentRotateY}deg
       )
 
-      scale(1.025)
+      scale(${scale})
     `;
   }
 
@@ -859,7 +898,6 @@ function animateProfileLook() {
     animateProfileLook
   );
 }
-
 animateProfileLook();
 
 
