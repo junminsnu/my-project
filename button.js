@@ -2346,7 +2346,7 @@ document.addEventListener(
 );
   /* =========================
    7. 전체 페이지 테마 변경 🎨
-   기본 = 블루
+   기본 = 핑크
    상단 네비게이션도 테마와 함께 변경
    ========================= */
 
@@ -2355,42 +2355,42 @@ const themeStyle = document.createElement('style');
 themeStyle.textContent = `
 
   /* =========================
-     기본값 = 블루
+     기본값 = 핑크
      ========================= */
 
   html {
-    --my-bg: #eff6ff;
+    --my-bg: #fff8fd;
     --my-card: #ffffff;
-    --my-card-2: #f1f6ff;
+    --my-card-2: #fff1fa;
 
-    --my-text: #293748;
-    --my-subtext: #718096;
+    --my-text: #4b3545;
+    --my-subtext: #8a7182;
 
-    --my-border: #dae6f5;
+    --my-border: #f6ddec;
 
-    --my-accent: #2563eb;
-    --my-accent-2: #3b82f6;
+    --my-accent: rgb(255, 200, 240);
+    --my-accent-2: #ffd9f3;
 
-    --my-soft: #e2ecff;
+    --my-soft: #ffe8f8;
 
     --my-shadow:
-      0 4px 20px rgba(37,99,235,.08);
+      0 4px 20px rgba(255,200,240,.24);
 
     /* 상단 네비게이션 */
-    --nav-bg-1: #2563eb;
-    --nav-bg-2: #3b82f6;
+    --nav-bg-1: rgb(255, 200, 240);
+    --nav-bg-2: #ffd9f3;
 
-    --nav-text: #ffffff;
-    --nav-hover: rgba(255,255,255,.14);
+    --nav-text: #4b3545;
+    --nav-hover: rgba(255,255,255,.30);
 
     --nav-sub-bg: #ffffff;
-    --nav-sub-text: #333333;
-    --nav-sub-hover: #eaf1ff;
+    --nav-sub-text: #4b3545;
+    --nav-sub-hover: #fff1fa;
   }
 
 
   /* =========================
-     기본 = 블루
+     블루
      ========================= */
 
   html[data-my-theme="blue"] {
@@ -3181,14 +3181,13 @@ themePanel.id =
 
 
 /*
- * 기본 = 블루
- * 별도의 "블루" 항목은 만들지 않음
+ * 기본 = 핑크
  */
 const themes = [
 
   {
     id: 'blue',
-    name: '기본',
+    name: '블루',
     icon: '🔵'
   },
 
@@ -3200,7 +3199,7 @@ const themes = [
 
   {
     id: 'pink',
-    name: '핑크',
+    name: '핑크 (기본)',
     icon: '🌸'
   },
 
@@ -3346,10 +3345,10 @@ function applyMyTheme(theme) {
 
   /*
    * 예전 버전에서 default가 저장되어 있으면
-   * 자동으로 기본 블루로 교체
+   * 자동으로 기본 핑크로 교체
    */
   if (theme === 'default') {
-    theme = 'blue';
+    theme = 'pink';
   }
 
 
@@ -3358,7 +3357,7 @@ function applyMyTheme(theme) {
       x => x.id === theme
     )
   ) {
-    theme = 'blue';
+    theme = 'pink';
   }
 
 
@@ -3600,28 +3599,28 @@ document.body.appendChild(
 
 /* =========================
    이전 선택 테마 복구
-   기본값은 무조건 blue
+   기본값은 pink
    ========================= */
 
 let savedTheme =
-  'blue';
+  'pink';
 
 try {
 
   savedTheme =
     localStorage.getItem(
       'my-uportfolio-theme'
-    ) || 'blue';
+    ) || 'pink';
 
 } catch (e) {}
 
 
 /*
  * 예전 코드에서 저장된 default도
- * 자동으로 blue로 마이그레이션
+ * 자동으로 pink로 마이그레이션
  */
 if (savedTheme === 'default') {
-  savedTheme = 'blue';
+  savedTheme = 'pink';
 }
 
 
@@ -3632,7 +3631,7 @@ if (
 ) {
 
   savedTheme =
-    'blue';
+    'pink';
 
 }
 
