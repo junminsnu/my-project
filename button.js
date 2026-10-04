@@ -1039,6 +1039,8 @@ document.addEventListener(
 );
   /* =========================
    6. 전체 페이지 테마 변경 🎨
+   기본 = 블루
+   상단 네비게이션도 테마와 함께 변경
    ========================= */
 
 const themeStyle = document.createElement('style');
@@ -1046,31 +1048,76 @@ const themeStyle = document.createElement('style');
 themeStyle.textContent = `
 
   /* =========================
-     공통 테마 변수
+     기본값 = 블루
      ========================= */
 
   html {
-    --my-bg: #f4f6fb;
+    --my-bg: #eff6ff;
     --my-card: #ffffff;
-    --my-card-2: #f7f8ff;
+    --my-card-2: #f1f6ff;
 
-    --my-text: #333333;
-    --my-subtext: #777777;
+    --my-text: #293748;
+    --my-subtext: #718096;
 
-    --my-border: #e7e8ee;
+    --my-border: #dae6f5;
 
-    --my-accent: #6366f1;
-    --my-accent-2: #8b5cf6;
+    --my-accent: #2563eb;
+    --my-accent-2: #3b82f6;
 
-    --my-soft: #eef0ff;
+    --my-soft: #e2ecff;
 
     --my-shadow:
-      0 4px 18px rgba(0,0,0,.06);
+      0 4px 20px rgba(37,99,235,.08);
+
+    /* 상단 네비게이션 */
+    --nav-bg-1: #2563eb;
+    --nav-bg-2: #3b82f6;
+
+    --nav-text: #ffffff;
+    --nav-hover: rgba(255,255,255,.14);
+
+    --nav-sub-bg: #ffffff;
+    --nav-sub-text: #333333;
+    --nav-sub-hover: #eaf1ff;
   }
 
 
   /* =========================
-     보라색
+     기본 = 블루
+     ========================= */
+
+  html[data-my-theme="blue"] {
+    --my-bg: #eff6ff;
+    --my-card: #ffffff;
+    --my-card-2: #f1f6ff;
+
+    --my-text: #293748;
+    --my-subtext: #718096;
+
+    --my-border: #dae6f5;
+
+    --my-accent: #2563eb;
+    --my-accent-2: #3b82f6;
+
+    --my-soft: #e2ecff;
+
+    --my-shadow:
+      0 4px 20px rgba(37,99,235,.08);
+
+    --nav-bg-1: #2563eb;
+    --nav-bg-2: #3b82f6;
+
+    --nav-text: #ffffff;
+    --nav-hover: rgba(255,255,255,.14);
+
+    --nav-sub-bg: #ffffff;
+    --nav-sub-text: #333333;
+    --nav-sub-hover: #eaf1ff;
+  }
+
+
+  /* =========================
+     퍼플
      ========================= */
 
   html[data-my-theme="purple"] {
@@ -1090,11 +1137,21 @@ themeStyle.textContent = `
 
     --my-shadow:
       0 4px 20px rgba(124,58,237,.08);
+
+    --nav-bg-1: #6d28d9;
+    --nav-bg-2: #a855f7;
+
+    --nav-text: #ffffff;
+    --nav-hover: rgba(255,255,255,.14);
+
+    --nav-sub-bg: #ffffff;
+    --nav-sub-text: #342d40;
+    --nav-sub-hover: #f3e8ff;
   }
 
 
   /* =========================
-     분홍색
+     핑크
      ========================= */
 
   html[data-my-theme="pink"] {
@@ -1114,6 +1171,16 @@ themeStyle.textContent = `
 
     --my-shadow:
       0 4px 20px rgba(236,72,153,.08);
+
+    --nav-bg-1: #db2777;
+    --nav-bg-2: #f472b6;
+
+    --nav-text: #ffffff;
+    --nav-hover: rgba(255,255,255,.14);
+
+    --nav-sub-bg: #ffffff;
+    --nav-sub-text: #423238;
+    --nav-sub-hover: #fce7f3;
   }
 
 
@@ -1138,30 +1205,16 @@ themeStyle.textContent = `
 
     --my-shadow:
       0 4px 20px rgba(15,159,130,.08);
-  }
 
+    --nav-bg-1: #0f766e;
+    --nav-bg-2: #2dd4bf;
 
-  /* =========================
-     파랑
-     ========================= */
+    --nav-text: #ffffff;
+    --nav-hover: rgba(255,255,255,.14);
 
-  html[data-my-theme="blue"] {
-    --my-bg: #eff6ff;
-    --my-card: #ffffff;
-    --my-card-2: #f1f6ff;
-
-    --my-text: #293748;
-    --my-subtext: #718096;
-
-    --my-border: #dae6f5;
-
-    --my-accent: #2563eb;
-    --my-accent-2: #3b82f6;
-
-    --my-soft: #e2ecff;
-
-    --my-shadow:
-      0 4px 20px rgba(37,99,235,.08);
+    --nav-sub-bg: #ffffff;
+    --nav-sub-text: #293d38;
+    --nav-sub-hover: #dff8f3;
   }
 
 
@@ -1186,203 +1239,25 @@ themeStyle.textContent = `
 
     --my-shadow:
       0 5px 22px rgba(0,0,0,.25);
+
+    --nav-bg-1: #1f2026;
+    --nav-bg-2: #484050;
+
+    --nav-text: #f4f4f5;
+    --nav-hover: rgba(255,255,255,.10);
+
+    --nav-sub-bg: #25272e;
+    --nav-sub-text: #eeeeee;
+    --nav-sub-hover: #353842;
   }
 
-/* =========================
-   상단 네비게이션 색상
-   ========================= */
 
-html {
-  --nav-bg-1: #2563eb;
-  --nav-bg-2: #7c3aed;
-
-  --nav-text: #ffffff;
-  --nav-hover: rgba(255,255,255,.14);
-
-  --nav-sub-bg: #ffffff;
-  --nav-sub-text: #333333;
-  --nav-sub-hover: #f3f4ff;
-}
-
-
-/* 블루 */
-html[data-my-theme="blue"] {
-  --nav-bg-1: #2563eb;
-  --nav-bg-2: #3b82f6;
-
-  --nav-sub-hover: #eaf1ff;
-}
-
-
-/* 퍼플 */
-html[data-my-theme="purple"] {
-  --nav-bg-1: #6d28d9;
-  --nav-bg-2: #9333ea;
-
-  --nav-sub-hover: #f3e8ff;
-}
-
-
-/* 핑크 */
-html[data-my-theme="pink"] {
-  --nav-bg-1: #db2777;
-  --nav-bg-2: #f472b6;
-
-  --nav-sub-hover: #fce7f3;
-}
-
-
-/* 민트 */
-html[data-my-theme="mint"] {
-  --nav-bg-1: #0f766e;
-  --nav-bg-2: #14b8a6;
-
-  --nav-sub-hover: #dff8f3;
-}
-
-
-/* 다크 */
-html[data-my-theme="dark"] {
-  --nav-bg-1: #1f2026;
-  --nav-bg-2: #34313f;
-
-  --nav-text: #f4f4f5;
-
-  --nav-sub-bg: #25272e;
-  --nav-sub-text: #eeeeee;
-  --nav-sub-hover: #353842;
-}
-
-
-/* =========================
-   실제 상단 바
-   ========================= */
-
-html:not([data-my-theme="default"])
-.nav-wrap,
-
-html:not([data-my-theme="default"])
-.nav-wrap-inner {
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--nav-bg-1),
-      var(--nav-bg-2)
-    ) !important;
-}
-
-
-/*
- * 사이트에 nav-bg가 따로 깔려있으면
- * 이것도 같이 변경
- */
-html:not([data-my-theme="default"])
-.nav-bg {
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--nav-bg-1),
-      var(--nav-bg-2)
-    ) !important;
-}
-
-
-/* =========================
-   MY / Phase I / Phase II ...
-   ========================= */
-
-html:not([data-my-theme="default"])
-#topMenuListAdd
-> .depth-1
-> .link-text {
-
-  color:
-    var(--nav-text) !important;
-
-}
-
-
-/* 마우스 올렸을 때 */
-html:not([data-my-theme="default"])
-#topMenuListAdd
-> .depth-1
-> .link-text:hover {
-
-  background:
-    var(--nav-hover) !important;
-
-}
-
-
-/* =========================
-   펼쳐지는 하위 메뉴
-   ========================= */
-
-html:not([data-my-theme="default"])
-#topMenuListAdd
-.sub-menu-list-wrap {
-
-  background:
-    var(--nav-sub-bg) !important;
-
-  border-color:
-    rgba(0,0,0,.08) !important;
-
-  box-shadow:
-    0 8px 22px
-    rgba(0,0,0,.12) !important;
-
-}
-
-
-/* 하위 메뉴 글자 */
-html:not([data-my-theme="default"])
-#topMenuListAdd
-.depth-2
-> .link-text {
-
-  color:
-    var(--nav-sub-text) !important;
-
-}
-
-
-/* 하위 메뉴 hover */
-html:not([data-my-theme="default"])
-#topMenuListAdd
-.depth-2
-> .link-text:hover {
-
-  background:
-    var(--nav-sub-hover) !important;
-
-  color:
-    var(--nav-bg-1) !important;
-
-}
-
-
-/* =========================
-   삼각형 ▼
-   ========================= */
-
-html:not([data-my-theme="default"])
-#topMenuListAdd
-.depth-1
-.triangle {
-
-  border-top-color:
-    var(--nav-text) !important;
-
-}
-  /* ===================================
+  /* =========================
      페이지 전체
-     =================================== */
+     ========================= */
 
-  html:not([data-my-theme="default"]) body,
-  html:not([data-my-theme="default"]) .page-content-wrap {
+  html[data-my-theme] body,
+  html[data-my-theme] .page-content-wrap {
     background:
       var(--my-bg) !important;
 
@@ -1395,19 +1270,13 @@ html:not([data-my-theme="default"])
   }
 
 
-  /* ===================================
+  /* =========================
      카드
-     =================================== */
+     ========================= */
 
-  html:not([data-my-theme="default"])
-  .card-wrap,
-
-  html:not([data-my-theme="default"])
-  .card-body,
-
-  html:not([data-my-theme="default"])
-  .card-content {
-
+  html[data-my-theme] .card-wrap,
+  html[data-my-theme] .card-body,
+  html[data-my-theme] .card-content {
     background-color:
       var(--my-card) !important;
 
@@ -1419,47 +1288,26 @@ html:not([data-my-theme="default"])
   }
 
 
-  html:not([data-my-theme="default"])
-  .card-wrap {
-
+  html[data-my-theme] .card-wrap {
     box-shadow:
       var(--my-shadow) !important;
-
   }
 
 
-  /* 카드 제목 */
-  html:not([data-my-theme="default"])
-  .card-title,
-
-  html:not([data-my-theme="default"])
-  .content-title,
-
-  html:not([data-my-theme="default"])
-  .graph-title,
-
-  html:not([data-my-theme="default"])
-  .box-title {
-
+  html[data-my-theme] .card-title,
+  html[data-my-theme] .content-title,
+  html[data-my-theme] .graph-title,
+  html[data-my-theme] .box-title {
     color:
       var(--my-text) !important;
-
   }
 
 
-  /* 보조 텍스트 */
-  html:not([data-my-theme="default"])
-  .info,
-
-  html:not([data-my-theme="default"])
-  .desc,
-
-  html:not([data-my-theme="default"])
-  .date {
-
+  html[data-my-theme] .info,
+  html[data-my-theme] .desc,
+  html[data-my-theme] .date {
     color:
       var(--my-subtext) !important;
-
   }
 
 
@@ -1467,24 +1315,18 @@ html:not([data-my-theme="default"])
      제출현황 박스
      ========================= */
 
-  html:not([data-my-theme="default"])
-  .box-item {
-
+  html[data-my-theme] .box-item {
     background:
       var(--my-card-2) !important;
 
     border-color:
       var(--my-border) !important;
-
   }
 
 
-  html:not([data-my-theme="default"])
-  .box-desc {
-
+  html[data-my-theme] .box-desc {
     color:
       var(--my-text) !important;
-
   }
 
 
@@ -1492,53 +1334,41 @@ html:not([data-my-theme="default"])
      탭 버튼
      ========================= */
 
-  html:not([data-my-theme="default"])
-  .btn-tab {
-
+  html[data-my-theme] .btn-tab {
     color:
       var(--my-subtext) !important;
 
     border-color:
       var(--my-border) !important;
-
   }
 
 
-  html:not([data-my-theme="default"])
-  .btn-tab.active-tab {
-
+  html[data-my-theme] .btn-tab.active-tab {
     color:
       var(--my-accent) !important;
 
     border-color:
       var(--my-accent) !important;
-
   }
 
 
   /* =========================
-     기존 파란 강조색
+     강조색
      ========================= */
 
-  html:not([data-my-theme="default"])
-  .font-blue {
-
+  html[data-my-theme] .font-blue {
     color:
       var(--my-accent) !important;
-
   }
 
 
-  html:not([data-my-theme="default"])
-  [data-name="line"] {
-
+  html[data-my-theme] [data-name="line"] {
     background:
       linear-gradient(
         90deg,
         var(--my-accent),
         var(--my-accent-2)
       ) !important;
-
   }
 
 
@@ -1546,9 +1376,7 @@ html:not([data-my-theme="default"])
      응원문구
      ========================= */
 
-  html:not([data-my-theme="default"])
-  [data-name="my_word"] {
-
+  html[data-my-theme] [data-name="my_word"] {
     background:
       var(--my-card-2) !important;
 
@@ -1556,9 +1384,7 @@ html:not([data-my-theme="default"])
       var(--my-text) !important;
 
     border:
-      1px solid
-      var(--my-border) !important;
-
+      1px solid var(--my-border) !important;
   }
 
 
@@ -1566,9 +1392,7 @@ html:not([data-my-theme="default"])
      내가 만든 바로가기
      ========================= */
 
-  html:not([data-my-theme="default"])
-  #profile-shortcuts a {
-
+  html[data-my-theme] #profile-shortcuts a {
     background:
       linear-gradient(
         135deg,
@@ -1583,7 +1407,103 @@ html:not([data-my-theme="default"])
         var(--my-accent) 25%,
         transparent
       ) !important;
+  }
 
+
+  /* =========================
+     ★ 상단 네비게이션 바
+     ========================= */
+
+  html[data-my-theme] .nav-wrap,
+  html[data-my-theme] .nav-wrap-inner,
+  html[data-my-theme] .nav-bg {
+    background:
+      linear-gradient(
+        110deg,
+        var(--nav-bg-1) 0%,
+        var(--nav-bg-2) 100%
+      ) !important;
+  }
+
+
+  /* MY / PhaseⅠ / PhaseⅡ / ... */
+  html[data-my-theme]
+  #topMenuListAdd
+  > .depth-1
+  > .link-text {
+    color:
+      var(--nav-text) !important;
+
+    transition:
+      background .18s ease,
+      color .18s ease;
+  }
+
+
+  html[data-my-theme]
+  #topMenuListAdd
+  > .depth-1
+  > .link-text:hover {
+    background:
+      var(--nav-hover) !important;
+  }
+
+
+  /* ▼ 삼각형 */
+  html[data-my-theme]
+  #topMenuListAdd
+  > .depth-1
+  > .link-text
+  .triangle {
+    border-top-color:
+      var(--nav-text) !important;
+  }
+
+
+  /* 펼쳐지는 하위 메뉴 */
+  html[data-my-theme]
+  #topMenuListAdd
+  .sub-menu-list-wrap {
+    background:
+      var(--nav-sub-bg) !important;
+
+    border-color:
+      var(--my-border) !important;
+
+    box-shadow:
+      0 8px 22px rgba(0,0,0,.14) !important;
+  }
+
+
+  html[data-my-theme]
+  #topMenuListAdd
+  .depth-2
+  > .link-text {
+    color:
+      var(--nav-sub-text) !important;
+
+    transition:
+      background .15s ease,
+      color .15s ease;
+  }
+
+
+  html[data-my-theme]
+  #topMenuListAdd
+  .depth-2
+  > .link-text:hover {
+    background:
+      var(--nav-sub-hover) !important;
+
+    color:
+      var(--nav-bg-1) !important;
+  }
+
+
+  /* 햄버거 메뉴 영역도 바 색상에 맞춤 */
+  html[data-my-theme] .btn-menu-trigger {
+    background:
+      transparent !important;
   }
 
 
@@ -1591,24 +1511,12 @@ html:not([data-my-theme="default"])
      달력
      ========================= */
 
-  html:not([data-my-theme="default"])
-  #calendar,
-
-  html:not([data-my-theme="default"])
-  #calendar table,
-
-  html:not([data-my-theme="default"])
-  .fc-view,
-
-  html:not([data-my-theme="default"])
-  .fc-row,
-
-  html:not([data-my-theme="default"])
-  .fc-widget-content,
-
-  html:not([data-my-theme="default"])
-  .fc-widget-header {
-
+  html[data-my-theme] #calendar,
+  html[data-my-theme] #calendar table,
+  html[data-my-theme] .fc-view,
+  html[data-my-theme] .fc-row,
+  html[data-my-theme] .fc-widget-content,
+  html[data-my-theme] .fc-widget-header {
     background:
       var(--my-card) !important;
 
@@ -1617,22 +1525,16 @@ html:not([data-my-theme="default"])
 
     border-color:
       var(--my-border) !important;
-
   }
 
 
-  html:not([data-my-theme="default"])
-  .fc-today {
-
+  html[data-my-theme] .fc-today {
     background:
       var(--my-soft) !important;
-
   }
 
 
-  html:not([data-my-theme="default"])
-  .fc-button {
-
+  html[data-my-theme] .fc-button {
     background:
       var(--my-card-2) !important;
 
@@ -1641,19 +1543,15 @@ html:not([data-my-theme="default"])
 
     border-color:
       var(--my-border) !important;
-
   }
 
 
-  html:not([data-my-theme="default"])
-  .fc-state-active {
-
+  html[data-my-theme] .fc-state-active {
     background:
       var(--my-accent) !important;
 
     color:
       white !important;
-
   }
 
 
@@ -1661,9 +1559,7 @@ html:not([data-my-theme="default"])
      피드백톡
      ========================= */
 
-  html:not([data-my-theme="default"])
-  .talk-box {
-
+  html[data-my-theme] .talk-box {
     background:
       var(--my-card-2) !important;
 
@@ -1672,22 +1568,14 @@ html:not([data-my-theme="default"])
 
     border-color:
       var(--my-accent) !important;
-
   }
 
 
-  html:not([data-my-theme="default"])
-  .talk-box .text,
-
-  html:not([data-my-theme="default"])
-  .talk-box .subject,
-
-  html:not([data-my-theme="default"])
-  .talk-box .name {
-
+  html[data-my-theme] .talk-box .text,
+  html[data-my-theme] .talk-box .subject,
+  html[data-my-theme] .talk-box .name {
     color:
       var(--my-text) !important;
-
   }
 
 
@@ -1695,9 +1583,7 @@ html:not([data-my-theme="default"])
      링크 / 일반 버튼
      ========================= */
 
-  html:not([data-my-theme="default"])
-  .rate-change {
-
+  html[data-my-theme] .rate-change {
     color:
       var(--my-accent) !important;
 
@@ -1706,7 +1592,6 @@ html:not([data-my-theme="default"])
 
     border-color:
       var(--my-border) !important;
-
   }
 
 
@@ -1714,15 +1599,9 @@ html:not([data-my-theme="default"])
      폼
      ========================= */
 
-  html:not([data-my-theme="default"])
-  input,
-
-  html:not([data-my-theme="default"])
-  textarea,
-
-  html:not([data-my-theme="default"])
-  select {
-
+  html[data-my-theme] input,
+  html[data-my-theme] textarea,
+  html[data-my-theme] select {
     background-color:
       var(--my-card) !important;
 
@@ -1731,7 +1610,6 @@ html:not([data-my-theme="default"])
 
     border-color:
       var(--my-border) !important;
-
   }
 
 
@@ -1744,17 +1622,17 @@ html:not([data-my-theme="default"])
       #d7d8df;
   }
 
+
   html[data-my-theme="dark"] .fc-other-month {
     opacity: .45;
   }
 
 
-  /* ===================================
+  /* =========================
      테마 선택 버튼
-     =================================== */
+     ========================= */
 
   #my-theme-control {
-
     position: fixed;
 
     left: 18px;
@@ -1765,19 +1643,16 @@ html:not([data-my-theme="default"])
     font-family:
       Arial,
       sans-serif;
-
   }
 
 
   #my-theme-button {
-
     width: 46px;
     height: 46px;
 
     padding: 0;
 
     border: 0;
-
     border-radius: 50%;
 
     background:
@@ -1794,12 +1669,10 @@ html:not([data-my-theme="default"])
     cursor: pointer;
 
     box-shadow:
-      0 5px 18px
-      rgba(0,0,0,.20);
+      0 5px 18px rgba(0,0,0,.20);
 
     transition:
       transform .18s ease;
-
   }
 
 
@@ -1811,9 +1684,7 @@ html:not([data-my-theme="default"])
 
 
   /* 선택창 */
-
   #my-theme-panel {
-
     position: absolute;
 
     left: 0;
@@ -1834,16 +1705,13 @@ html:not([data-my-theme="default"])
       var(--my-card);
 
     border:
-      1px solid
-      var(--my-border);
+      1px solid var(--my-border);
 
     border-radius:
       14px;
 
     box-shadow:
-      0 7px 25px
-      rgba(0,0,0,.16);
-
+      0 7px 25px rgba(0,0,0,.16);
   }
 
 
@@ -1853,10 +1721,8 @@ html:not([data-my-theme="default"])
 
 
   .my-theme-option {
-
     border:
-      1px solid
-      var(--my-border);
+      1px solid var(--my-border);
 
     border-radius: 9px;
 
@@ -1876,30 +1742,25 @@ html:not([data-my-theme="default"])
     transition:
       transform .12s ease,
       border-color .12s ease;
-
   }
 
 
   .my-theme-option:hover {
-
     transform:
       translateY(-2px);
 
     border-color:
       var(--my-accent);
-
   }
 
 
   .my-theme-option.active {
-
     border-color:
       var(--my-accent);
 
     box-shadow:
       inset 0 0 0 1px
       var(--my-accent);
-
   }
 
 `;
@@ -1944,19 +1805,14 @@ themePanel.id =
 
 
 /*
- * 테마 목록
+ * 기본 = 블루
+ * 별도의 "블루" 항목은 만들지 않음
  */
 const themes = [
 
   {
-    id: 'default',
-    name: '기본',
-    icon: '⚪'
-  },
-
-  {
     id: 'blue',
-    name: '블루',
+    name: '기본',
     icon: '🔵'
   },
 
@@ -1992,6 +1848,24 @@ const themes = [
    ========================= */
 
 function applyMyTheme(theme) {
+
+  /*
+   * 예전 버전에서 default가 저장되어 있으면
+   * 자동으로 기본 블루로 교체
+   */
+  if (theme === 'default') {
+    theme = 'blue';
+  }
+
+
+  if (
+    !themes.some(
+      x => x.id === theme
+    )
+  ) {
+    theme = 'blue';
+  }
+
 
   document.documentElement.setAttribute(
     'data-my-theme',
@@ -2132,19 +2006,29 @@ document.body.appendChild(
 
 /* =========================
    이전 선택 테마 복구
+   기본값은 무조건 blue
    ========================= */
 
 let savedTheme =
-  'default';
+  'blue';
 
 try {
 
   savedTheme =
     localStorage.getItem(
       'my-uportfolio-theme'
-    ) || 'default';
+    ) || 'blue';
 
 } catch (e) {}
+
+
+/*
+ * 예전 코드에서 저장된 default도
+ * 자동으로 blue로 마이그레이션
+ */
+if (savedTheme === 'default') {
+  savedTheme = 'blue';
+}
 
 
 if (
@@ -2154,7 +2038,7 @@ if (
 ) {
 
   savedTheme =
-    'default';
+    'blue';
 
 }
 
