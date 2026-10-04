@@ -1,6 +1,5 @@
-
 (() => {
-  if (document.querySelector('#my-shortcuts')) return;
+  if (document.querySelector('#profile-shortcuts')) return;
 
   const links = [
     ['🚀 최종 자료', '/st/clinical-training/final-ref'],
@@ -10,16 +9,13 @@
   ];
 
   const box = document.createElement('div');
-  box.id = 'my-shortcuts';
+  box.id = 'profile-shortcuts';
 
   Object.assign(box.style, {
-    position: 'fixed',
-    right: '20px',
-    bottom: '20px',
-    zIndex: '99999',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '8px',
+    marginBottom: '12px'
   });
 
   links.forEach(([text, href]) => {
@@ -29,17 +25,25 @@
     a.textContent = text;
 
     Object.assign(a.style, {
-      padding: '12px 20px',
-      borderRadius: '14px',
+      display: 'block',
+      padding: '10px 8px',
+      borderRadius: '10px',
       background: 'linear-gradient(135deg,#2563eb,#7c3aed)',
       color: '#fff',
+      textAlign: 'center',
       textDecoration: 'none',
       fontWeight: '700',
-      boxShadow: '0 4px 15px #0003'
+      fontSize: '13px',
+      boxShadow: '0 3px 10px #0002',
+      transition: '.15s'
     });
+
+    a.onmouseenter = () => a.style.transform = 'translateY(-2px)';
+    a.onmouseleave = () => a.style.transform = '';
 
     box.appendChild(a);
   });
 
-  document.body.appendChild(box);
+  const profile = document.querySelector('.main-profile');
+  profile?.parentNode.insertBefore(box, profile);
 })();
