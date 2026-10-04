@@ -11,7 +11,6 @@
     ['📝 일실기', '/st/clinical-training/day-practice'],
     ['📅 주실기', '/st/clinical-training/week-plan'],
     ['✨ 최종성찰', '/st/clinical-training/final-ref'],
-    ['👤 내정보', '/st/my/profile']
   ];
 
   const box = document.createElement('div');
@@ -481,37 +480,116 @@ window.addEventListener('resize', () => {
     )
   );
 });
-  /* =========================
-   5. 프로필 사진 후광 효과
-   ========================= */
 /* =========================
-   5. 프로필 오로라 + 시선 추적
+   프로필 사진 내부 시선 추적
    ========================= */
 
-// 현재 오로라 상태
-let profileAuraEnabled = true;
-
-// 현재 마우스 위치
 let profileCursorX = window.innerWidth / 2;
 let profileCursorY = window.innerHeight / 2;
 
-// 현재 / 목표 회전값
-let currentRotateX = 0;
-let currentRotateY = 0;
+let photoCurrentX = 0;
+let photoCurrentY = 0;
+let photoCurrentRotateX = 0;
+let photoCurrentRotateY = 0;
 
-let targetRotateX = 0;
-let targetRotateY = 0;
+let profileAuraEnabled = true;
 
 
-// =========================
-// CSS
-// =========================
+/* =========================
+   CSS
+   ========================= */
 
 const profileEffectStyle = document.createElement('style');
 
 profileEffectStyle.textContent = `
 
+  /*
+   * 바깥 원
+   * 절대로 기울어지지 않음
+   */
+  [data-name="profileImg"] {
+    position: relative !important;
+
+    border-radius: 50% !important;
+    overflow: hidden !important;
+
+    cursor: pointer !important;
+
+    /*
+     * 원 자체의 기존 배경 제거
+     * 실제 사진은 내부 div로 이동
+     */
+    background-image: none !important;
+
+    transform: none !important;
+
+    z-index: 2;
+
+    /*
+     * 사진이 원 밖으로 절대 나오지 않게
+     */
+    isolation: isolate;
+  }
+
+
+  /*
+   * 실제 프로필 사진
+   */
+  .profile-inner-photo {
+    position: absolute;
+
+    /*
+     * 원보다 크게 만들어야
+     * 사진이 움직여도 빈틈이 안 생김
+     */
+    width: 125%;
+    height: 125%;
+
+    left: 50%;
+    top: 50%;
+
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+
+    pointer-events: none;
+
+    will-change: transform;
+
+    /*
+     * 사진 자체는 직사각형이어도 됨.
+     * 부모 원에서 잘리므로 여기에는
+     * border-radius 필요 없음.
+     */
+  }
+
+
+  /*
+   * 사진 위에 아주 약한 입체광
+   */
+  .profile-inner-light {
+    position: absolute;
+    inset: 0;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+
+    z-index: 3;
+
+    background:
+      radial-gradient(
+        circle at var(--light-x, 50%) var(--light-y, 50%),
+        rgba(255,255,255,.20),
+        rgba(255,255,255,0) 48%
+      );
+
+    transition: background .1s linear;
+  }
+
+
   @keyframes profileAuraSpin {
+
     0% {
       transform: rotate(0deg) scale(1);
       opacity: .58;
@@ -536,11 +614,10 @@ profileEffectStyle.textContent = `
       linear
       infinite;
 
-    transition:
-      opacity .35s ease,
-      filter .35s ease;
-
     pointer-events: none;
+
+    transition:
+      opacity .3s ease;
   }
 
 
@@ -549,51 +626,16 @@ profileEffectStyle.textContent = `
     animation-play-state: paused;
   }
 
-
-  [data-name="profileImg"] {
-    transform-style: preserve-3d;
-    will-change: transform;
-    border-radius: 50% !important;
-
-    /*
-      JS에서 매 프레임 transform을 조절하므로
-      transform transition은 넣지 않음
-    */
-    transition:
-      filter .25s ease;
-
-    /*
-      이제 클릭하면 오로라가 켜지고 꺼지므로
-      클릭 가능한 표시
-    */
-    cursor: pointer !important;
-  }
-
-
-  [data-name="profileImg"]:hover {
-    filter:
-      brightness(1.04)
-      drop-shadow(
-        0 7px 10px
-        rgba(0, 0, 0, .16)
-      );
-  }
-
-
-  [data-name="my_word"] {
-    cursor: default !important;
-  }
-
 `;
 
 document.head.appendChild(profileEffectStyle);
 
 
-// =========================
-// 오로라 생성 / 복구
-// =========================
+/* =========================
+   프로필 내부 사진 만들기
+   ========================= */
 
-function ensureProfileAura() {
+function setupProfilePhoto() {
 
   const profileImg =
     document.querySelector(
@@ -603,16 +645,108 @@ function ensureProfileAura() {
   if (!profileImg) return null;
 
 
+  /*
+   * 최초 한 번만 원래 background-image 저장
+   */
+  if (!profileImg.dataset.originalProfileImage) {
+
+    const computed =
+      getComputedStyle(profileImg);
+
+    const originalImage =
+      computed.backgroundImage;
+
+    if (
+      originalImage &&
+      originalImage !== 'none'
+    ) {
+      profileImg.dataset.originalProfileImage =
+        originalImage;
+    }
+  }
+
+
+  /*
+   * 내부 실제 사진
+   */
+  let inner =
+    profileImg.querySelector(
+      '.profile-inner-photo'
+    );
+
+
+  if (!inner) {
+
+    inner =
+      document.createElement('div');
+
+    inner.className =
+      'profile-inner-photo';
+
+    profileImg.appendChild(inner);
+  }
+
+
+  if (
+    profileImg.dataset.originalProfileImage
+  ) {
+
+    inner.style.backgroundImage =
+      profileImg.dataset.originalProfileImage;
+  }
+
+
+  /*
+   * 빛 반사 레이어
+   */
+  let light =
+    profileImg.querySelector(
+      '.profile-inner-light'
+    );
+
+
+  if (!light) {
+
+    light =
+      document.createElement('div');
+
+    light.className =
+      'profile-inner-light';
+
+    profileImg.appendChild(light);
+  }
+
+
+  return {
+    profileImg,
+    inner,
+    light
+  };
+}
+
+
+/* =========================
+   오로라 생성
+   ========================= */
+
+function ensureProfileAura() {
+
+  const data =
+    setupProfilePhoto();
+
+  if (!data) return null;
+
+  const profileImg =
+    data.profileImg;
+
   const parent =
     profileImg.parentElement;
 
   if (!parent) return null;
 
 
-  parent.style.position = 'relative';
-
-  profileImg.style.position = 'relative';
-  profileImg.style.zIndex = '2';
+  parent.style.position =
+    'relative';
 
 
   let aura =
@@ -621,38 +755,41 @@ function ensureProfileAura() {
     );
 
 
-  // 오로라가 사라졌으면 다시 생성
   if (!aura) {
 
     aura =
       document.createElement('div');
 
-    aura.id = 'profile-aura';
+    aura.id =
+      'profile-aura';
 
 
-    Object.assign(aura.style, {
-      position: 'absolute',
+    Object.assign(
+      aura.style,
+      {
+        position: 'absolute',
 
-      borderRadius: '50%',
+        borderRadius: '50%',
 
-      background: `
-        conic-gradient(
-          from 0deg,
-          #60a5fa,
-          #8b5cf6,
-          #ec4899,
-          #f472b6,
-          #8b5cf6,
-          #60a5fa
-        )
-      `,
+        background: `
+          conic-gradient(
+            from 0deg,
+            #60a5fa,
+            #8b5cf6,
+            #ec4899,
+            #f472b6,
+            #8b5cf6,
+            #60a5fa
+          )
+        `,
 
-      filter: 'blur(8px)',
+        filter: 'blur(8px)',
 
-      zIndex: '1',
+        zIndex: '1',
 
-      pointerEvents: 'none'
-    });
+        pointerEvents: 'none'
+      }
+    );
 
 
     parent.insertBefore(
@@ -662,23 +799,37 @@ function ensureProfileAura() {
   }
 
 
-  // 현재 프로필 사진 크기와 위치에 맞춤
   const extra = 9;
 
+
   aura.style.width =
-    `${profileImg.offsetWidth + extra * 2}px`;
+    `${
+      profileImg.offsetWidth +
+      extra * 2
+    }px`;
+
 
   aura.style.height =
-    `${profileImg.offsetHeight + extra * 2}px`;
+    `${
+      profileImg.offsetHeight +
+      extra * 2
+    }px`;
+
 
   aura.style.left =
-    `${profileImg.offsetLeft - extra}px`;
+    `${
+      profileImg.offsetLeft -
+      extra
+    }px`;
+
 
   aura.style.top =
-    `${profileImg.offsetTop - extra}px`;
+    `${
+      profileImg.offsetTop -
+      extra
+    }px`;
 
 
-  // 현재 ON/OFF 상태 적용
   aura.classList.toggle(
     'aura-off',
     !profileAuraEnabled
@@ -686,33 +837,37 @@ function ensureProfileAura() {
 
 
   return {
-    profileImg,
+    ...data,
     aura
   };
 }
 
 
-// 처음 생성
 ensureProfileAura();
 
 
-// DOM 재렌더링 등에 대비해 복구
+/*
+ * 사이트가 프로필을 다시 그렸을 때도 복구
+ */
 setInterval(
   ensureProfileAura,
   1000
 );
 
 
-// =========================
-// 화면 어디에 있든 마우스 위치 추적
-// =========================
+/* =========================
+   화면 전체 마우스 위치
+   ========================= */
 
 document.addEventListener(
   'mousemove',
   e => {
 
-    profileCursorX = e.clientX;
-    profileCursorY = e.clientY;
+    profileCursorX =
+      e.clientX;
+
+    profileCursorY =
+      e.clientY;
 
   },
   {
@@ -721,172 +876,256 @@ document.addEventListener(
 );
 
 
-// =========================
-// 프로필이 마우스를 바라보게 만들기
-// =========================
+/* =========================
+   내부 사진이 커서를 따라봄
+   ========================= */
 
-function animateProfileLook() {
+function animateProfileFace() {
 
-  const profileImg =
-    document.querySelector(
-      '[data-name="profileImg"]'
-    );
+  const data =
+    setupProfilePhoto();
 
-  if (profileImg) {
+
+  if (data) {
+
+    const {
+      profileImg,
+      inner,
+      light
+    } = data;
+
 
     const rect =
       profileImg.getBoundingClientRect();
 
+
     const centerX =
-      rect.left + rect.width / 2;
+      rect.left +
+      rect.width / 2;
+
 
     const centerY =
-      rect.top + rect.height / 2;
+      rect.top +
+      rect.height / 2;
 
 
-    // 현재 커서가 프사 위에 있는지
-    const isHovering =
+    const dx =
+      profileCursorX -
+      centerX;
+
+
+    const dy =
+      profileCursorY -
+      centerY;
+
+
+    /*
+     * 프사 위에 커서가 있는지
+     */
+    const hovering =
       profileCursorX >= rect.left &&
       profileCursorX <= rect.right &&
       profileCursorY >= rect.top &&
       profileCursorY <= rect.bottom;
 
 
-    if (isHovering) {
+    let targetX;
+    let targetY;
 
-      /* =========================
-         프사 위에 있을 때
-         강한 3D 틸트
-         ========================= */
-
-      // 프사 중심 기준 -1 ~ 1
-      const localX =
-        (
-          profileCursorX - centerX
-        ) / (rect.width / 2);
-
-      const localY =
-        (
-          profileCursorY - centerY
-        ) / (rect.height / 2);
+    let targetRX;
+    let targetRY;
 
 
-      // 프사 위에서는 강하게
-      const hoverRotate = 18;
+    if (hovering) {
 
-      targetRotateY =
-        localX * hoverRotate;
+      /*
+       * =========================
+       * 프사 위
+       * 훨씬 강하게 반응
+       * =========================
+       */
 
-      targetRotateX =
-        -localY * hoverRotate;
+      const nx =
+        Math.max(
+          -1,
+          Math.min(
+            1,
+            dx / (rect.width / 2)
+          )
+        );
+
+
+      const ny =
+        Math.max(
+          -1,
+          Math.min(
+            1,
+            dy / (rect.height / 2)
+          )
+        );
+
+
+      /*
+       * 사진 내부 이동량
+       */
+      targetX =
+        nx * 9;
+
+      targetY =
+        ny * 7;
+
+
+      /*
+       * 사진 자체 기울기
+       */
+      targetRY =
+        nx * 12;
+
+      targetRX =
+        -ny * 10;
+
+
+      /*
+       * 빛도 마우스 따라 이동
+       */
+      light.style.setProperty(
+        '--light-x',
+        `${50 + nx * 28}%`
+      );
+
+      light.style.setProperty(
+        '--light-y',
+        `${50 + ny * 28}%`
+      );
 
     } else {
 
-      /* =========================
-         프사 밖에 있을 때
-         화면 전체 시선 추적
-         ========================= */
+      /*
+       * =========================
+       * 화면 어디에 있든
+       * 은은하게 따라봄
+       * =========================
+       */
 
-      const dx =
-        profileCursorX - centerX;
-
-      const dy =
-        profileCursorY - centerY;
-
-
-      const normalizedX =
-        dx / (window.innerWidth / 2);
-
-      const normalizedY =
-        dy / (window.innerHeight / 2);
-
-
-      // 평소에는 은은하게
-      const normalRotate = 9;
-
-      targetRotateY =
+      const nx =
         Math.max(
-          -normalRotate,
+          -1,
           Math.min(
-            normalRotate,
-            normalizedX * normalRotate
+            1,
+            dx /
+            (window.innerWidth / 2)
           )
         );
 
-      targetRotateX =
+
+      const ny =
         Math.max(
-          -normalRotate,
+          -1,
           Math.min(
-            normalRotate,
-            -normalizedY * normalRotate
+            1,
+            dy /
+            (window.innerHeight / 2)
           )
         );
+
+
+      /*
+       * 평소에는 매우 조금만 이동
+       */
+      targetX =
+        nx * 4;
+
+      targetY =
+        ny * 3;
+
+
+      targetRY =
+        nx * 4;
+
+      targetRX =
+        -ny * 3;
+
+
+      light.style.setProperty(
+        '--light-x',
+        `${50 + nx * 14}%`
+      );
+
+      light.style.setProperty(
+        '--light-y',
+        `${50 + ny * 14}%`
+      );
     }
 
 
-    /* =========================
-       부드럽게 목표 방향 따라가기
-       ========================= */
+    /*
+     * =========================
+     * 부드러운 추적
+     * =========================
+     */
 
-    // hover 중에는 반응도 조금 더 빠르게
     const smooth =
-      isHovering ? 0.16 : 0.07;
+      hovering
+        ? 0.14
+        : 0.055;
 
-    currentRotateX +=
-      (
-        targetRotateX -
-        currentRotateX
-      ) * smooth;
 
-    currentRotateY +=
+    photoCurrentX +=
       (
-        targetRotateY -
-        currentRotateY
+        targetX -
+        photoCurrentX
       ) * smooth;
 
 
-    /* =========================
-       살짝 위치 이동
-       ========================= */
-
-    const moveStrength =
-      isHovering ? 0.28 : 0.18;
-
-    const moveX =
-      currentRotateY *
-      moveStrength;
-
-    const moveY =
-      -currentRotateX *
-      moveStrength;
+    photoCurrentY +=
+      (
+        targetY -
+        photoCurrentY
+      ) * smooth;
 
 
-    /* =========================
-       프사 위에서는 앞으로도 살짝 튀어나옴
-       ========================= */
+    photoCurrentRotateX +=
+      (
+        targetRX -
+        photoCurrentRotateX
+      ) * smooth;
 
-    const z =
-      isHovering ? 16 : 8;
+
+    photoCurrentRotateY +=
+      (
+        targetRY -
+        photoCurrentRotateY
+      ) * smooth;
+
+
+    /*
+     * =========================
+     * 중요:
+     * 바깥 원은 안 움직이고
+     * 안쪽 사진만 움직임
+     * =========================
+     */
 
     const scale =
-      isHovering ? 1.055 : 1.025;
+      hovering
+        ? 1.08
+        : 1.04;
 
 
-    profileImg.style.transform = `
-      perspective(600px)
-
-      translate3d(
-        ${moveX}px,
-        ${moveY}px,
-        ${z}px
+    inner.style.transform = `
+      translate(
+        calc(-50% + ${photoCurrentX}px),
+        calc(-50% + ${photoCurrentY}px)
       )
 
+      perspective(500px)
+
       rotateX(
-        ${currentRotateX}deg
+        ${photoCurrentRotateX}deg
       )
 
       rotateY(
-        ${currentRotateY}deg
+        ${photoCurrentRotateY}deg
       )
 
       scale(${scale})
@@ -895,17 +1134,17 @@ function animateProfileLook() {
 
 
   requestAnimationFrame(
-    animateProfileLook
+    animateProfileFace
   );
 }
-animateProfileLook();
 
 
-// =========================
-// 프사 클릭 → 오로라 ON / OFF
-//
-// my_word 클릭 → 링크 이동만 방지
-// =========================
+animateProfileFace();
+
+
+/* =========================
+   클릭 → 오로라 ON/OFF
+   ========================= */
 
 document.addEventListener(
   'click',
@@ -917,67 +1156,100 @@ document.addEventListener(
       );
 
 
-    if (profileImg) {
-
-      // 부모 <a>의 정보수정 이동 방지
-      e.preventDefault();
-      e.stopPropagation();
+    if (!profileImg) return;
 
 
-      // 오로라 상태 반전
-      profileAuraEnabled =
-        !profileAuraEnabled;
+    e.preventDefault();
+    e.stopPropagation();
 
 
-      const aura =
-        ensureProfileAura()?.aura;
+    profileAuraEnabled =
+      !profileAuraEnabled;
 
 
-      if (aura) {
-
-        aura.classList.toggle(
-          'aura-off',
-          !profileAuraEnabled
-        );
-
-      }
-
-      return;
-    }
+    const aura =
+      ensureProfileAura()?.aura;
 
 
-    const myWord =
-      e.target.closest(
-        '[data-name="my_word"]'
+    if (aura) {
+
+      aura.classList.toggle(
+        'aura-off',
+        !profileAuraEnabled
       );
-
-
-    if (myWord) {
-
-      // 응원문구 클릭 시
-      // 정보수정 화면 이동 방지
-      e.preventDefault();
-      e.stopPropagation();
-
     }
 
   },
-
-  // 부모 a 태그보다 먼저 처리
   true
 );
 
 
-// =========================
-// 창 크기 변경 대응
-// =========================
+/* =========================
+   크기 변경 대응
+   ========================= */
 
 window.addEventListener(
   'resize',
-  () => {
+  ensureProfileAura
+);
+  /* =========================
+   프로필 흰색 카드 전체 링크 제거
+   ========================= */
 
-    ensureProfileAura();
+function disableProfileCardLink() {
 
+  const link = document.querySelector(
+    '.main-profile > a[href="/st/my/profile/modify"], ' +
+    '.main-profile a[href="/st/my/profile/modify"]'
+  );
+
+  if (!link) return;
+
+  // 원래 주소는 필요하면 보관
+  if (!link.dataset.originalHref) {
+    link.dataset.originalHref =
+      link.getAttribute('href') || '';
   }
+
+  // 실제 링크 기능 제거
+  link.removeAttribute('href');
+
+  // 링크처럼 보이는 마우스 커서 제거
+  link.style.cursor = 'default';
+}
+
+
+// 최초 실행
+disableProfileCardLink();
+
+
+// 사이트가 프로필 영역을 다시 그릴 수도 있으므로 계속 복구
+setInterval(
+  disableProfileCardLink,
+  500
+);
+
+
+// 혹시 href가 다시 붙는 순간에도 클릭 방지
+document.addEventListener(
+  'click',
+  e => {
+
+    const profileCard =
+      e.target.closest('.main-profile');
+
+    if (!profileCard) return;
+
+    const modifyLink =
+      e.target.closest(
+        'a[href="/st/my/profile/modify"]'
+      );
+
+    if (modifyLink) {
+      e.preventDefault();
+    }
+
+  },
+  true
 );
 })();
