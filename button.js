@@ -544,33 +544,32 @@ if (profileImg && !document.querySelector('#profile-aura')) {
     // 애니메이션 CSS
     const style = document.createElement('style');
 
-    style.textContent = `
-      @keyframes profileAuraSpin {
-        0% {
-          transform: rotate(0deg) scale(0.95);
-          opacity: .45;
-        }
+style.textContent = `
+  @keyframes profileAuraSpin {
+    0% {
+      transform: rotate(0deg) scale(1);
+      opacity: .58;
+    }
 
-        50% {
-          transform: rotate(180deg) scale(1.08);
-          opacity: .8;
-        }
+    50% {
+      transform: rotate(180deg) scale(1.02);
+      opacity: .68;
+    }
 
-        100% {
-          transform: rotate(360deg) scale(0.95);
-          opacity: .45;
-        }
-      }
+    100% {
+      transform: rotate(360deg) scale(1);
+      opacity: .58;
+    }
+  }
 
-      #profile-aura {
-        animation:
-          profileAuraSpin
-          4s
-          linear
-          infinite;
-      }
-    `;
-
+  #profile-aura {
+    animation:
+      profileAuraSpin
+      5s
+      linear
+      infinite;
+  }
+`;
     document.head.appendChild(style);
   }
 }
