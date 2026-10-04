@@ -484,26 +484,18 @@ window.addEventListener('resize', () => {
    5. 프로필 오로라 + 내부 사진 시선 추적
    ========================= */
 
-
-/* =========================
-   상태값
-   ========================= */
-
 let profileAuraEnabled = true;
 
 let profileCursorX = window.innerWidth / 2;
 let profileCursorY = window.innerHeight / 2;
 
-// 사진 현재 위치
 let photoCurrentX = 0;
 let photoCurrentY = 0;
 
-// 사진 현재 기울기
 let photoCurrentRotateX = 0;
 let photoCurrentRotateY = 0;
 
-// 확대값
-let photoCurrentScale = 1.12;
+let photoCurrentScale = 1.01;
 
 
 /* =========================
@@ -515,29 +507,16 @@ const profileEffectStyle =
 
 profileEffectStyle.textContent = `
 
-  /*
-   * 바깥 원
-   *
-   * 이 원 자체는 절대로 움직이지 않음.
-   * 내부 사진을 잘라주는 창 역할만 함.
-   */
+  /* 고정된 원형 틀 */
   [data-name="profileImg"] {
     position: relative !important;
 
     border-radius: 50% !important;
     overflow: hidden !important;
 
-    /*
-     * 원래 background-image는
-     * JS에서 내부 레이어로 복사함
-     */
     background-image: none !important;
 
-    /*
-     * 기존 3D transform 완전 제거
-     */
     transform: none !important;
-
     transform-style: flat !important;
 
     z-index: 2;
@@ -546,29 +525,20 @@ profileEffectStyle.textContent = `
 
     isolation: isolate;
 
-    /*
-     * 원 자체에는 hover 그림자나
-     * transform transition을 적용하지 않음
-     */
     transition: none !important;
   }
 
 
-  /*
-   * 실제 직사각형 프로필 사진
-   *
-   * 이것만 원 안에서 움직임.
-   */
+  /* 실제 사진 */
   .profile-inner-photo {
     position: absolute;
 
     /*
-     * 움직이거나 기울어져도
-     * 원 안에 빈 공간이 안 생기도록
-     * 원보다 꽤 크게 만듦.
+     * 원본보다 아주 조금만 크게
+     * 너무 확대되어 보이지 않게
      */
-    width: 140%;
-    height: 140%;
+    width: 116%;
+    height: 116%;
 
     left: 50%;
     top: 50%;
@@ -582,23 +552,17 @@ profileEffectStyle.textContent = `
     z-index: 1;
 
     transform-origin: center center;
-
     transform-style: preserve-3d;
 
     will-change: transform, filter;
 
-    /*
-     * 아주 약하게 입체감
-     */
     filter:
-      brightness(1.015)
-      contrast(1.015);
+      brightness(1.01)
+      contrast(1.01);
   }
 
 
-  /*
-   * 사진 위의 움직이는 빛
-   */
+  /* 사진 위 은은한 빛 */
   .profile-inner-light {
     position: absolute;
 
@@ -617,22 +581,16 @@ profileEffectStyle.textContent = `
         var(--profile-light-x, 50%)
         var(--profile-light-y, 50%),
 
-        rgba(255,255,255,.24) 0%,
-        rgba(255,255,255,.10) 22%,
+        rgba(255,255,255,.18) 0%,
+        rgba(255,255,255,.07) 23%,
         rgba(255,255,255,0) 55%
       );
 
-    opacity: .75;
-
-    will-change: background;
+    opacity: .7;
   }
 
 
-  /*
-   * 아주 약한 안쪽 그림자
-   *
-   * 원형 창 깊이감
-   */
+  /* 원 안쪽 깊이감 */
   .profile-inner-shadow {
     position: absolute;
 
@@ -645,38 +603,26 @@ profileEffectStyle.textContent = `
     pointer-events: none;
 
     box-shadow:
-      inset 0 0 7px rgba(0,0,0,.14),
-      inset 0 -3px 8px rgba(0,0,0,.08);
+      inset 0 0 6px rgba(0,0,0,.12),
+      inset 0 -3px 7px rgba(0,0,0,.07);
   }
 
 
-  /* =========================
-     오로라
-     ========================= */
-
+  /* 오로라 */
   @keyframes profileAuraSpin {
 
     0% {
-      transform:
-        rotate(0deg)
-        scale(1);
-
+      transform: rotate(0deg) scale(1);
       opacity: .58;
     }
 
     50% {
-      transform:
-        rotate(180deg)
-        scale(1.02);
-
+      transform: rotate(180deg) scale(1.02);
       opacity: .68;
     }
 
     100% {
-      transform:
-        rotate(360deg)
-        scale(1);
-
+      transform: rotate(360deg) scale(1);
       opacity: .58;
     }
 
@@ -684,7 +630,6 @@ profileEffectStyle.textContent = `
 
 
   #profile-aura {
-
     animation:
       profileAuraSpin
       5s
@@ -699,11 +644,8 @@ profileEffectStyle.textContent = `
 
 
   #profile-aura.aura-off {
-
     opacity: 0 !important;
-
     animation-play-state: paused;
-
   }
 
 
@@ -719,33 +661,34 @@ document.head.appendChild(
 
 
 /* =========================
-   원본 사진 주소 가져오기
+   원본 사진 주소 저장
    ========================= */
 
 function getProfileBackground(profileImg) {
 
-  /*
-   * HTML의 style="" 속성에 들어있는
-   * background-image를 먼저 읽음.
-   *
-   * CSS에서 background-image:none !important를
-   * 걸어놔도 style.backgroundImage에는
-   * 원래 주소가 남아있음.
-   */
   let image =
-    profileImg.style.backgroundImage;
+    profileImg.dataset.originalProfileImage;
 
 
-  /*
-   * 이미 한 번 저장했다면 그것 사용
-   */
-  if (
-    !image ||
-    image === 'none'
-  ) {
+  if (!image) {
 
+    /*
+     * inline style에 원래 프로필 사진 주소가 있으므로
+     * 여기서 먼저 가져옴
+     */
     image =
-      profileImg.dataset.originalProfileImage;
+      profileImg.style.backgroundImage;
+
+
+    if (
+      image &&
+      image !== 'none'
+    ) {
+
+      profileImg.dataset.originalProfileImage =
+        image;
+
+    }
 
   }
 
@@ -754,9 +697,6 @@ function getProfileBackground(profileImg) {
     image &&
     image !== 'none'
   ) {
-
-    profileImg.dataset.originalProfileImage =
-      image;
 
     return image;
 
@@ -768,7 +708,7 @@ function getProfileBackground(profileImg) {
 
 
 /* =========================
-   내부 사진 레이어 생성
+   내부 사진 구조 생성
    ========================= */
 
 function setupProfilePhoto() {
@@ -784,18 +724,12 @@ function setupProfilePhoto() {
   }
 
 
-  /*
-   * 원본 사진 주소
-   */
   const originalImage =
     getProfileBackground(
       profileImg
     );
 
 
-  /*
-   * 내부 실제 사진
-   */
   let inner =
     profileImg.querySelector(
       '.profile-inner-photo'
@@ -825,9 +759,6 @@ function setupProfilePhoto() {
   }
 
 
-  /*
-   * 빛 반사
-   */
   let light =
     profileImg.querySelector(
       '.profile-inner-light'
@@ -849,9 +780,6 @@ function setupProfilePhoto() {
   }
 
 
-  /*
-   * 안쪽 그림자
-   */
   let shadow =
     profileImg.querySelector(
       '.profile-inner-shadow'
@@ -921,9 +849,6 @@ function ensureProfileAura() {
     );
 
 
-  /*
-   * 오로라가 사라졌으면 재생성
-   */
   if (!aura) {
 
     aura =
@@ -937,16 +862,13 @@ function ensureProfileAura() {
       aura.style,
       {
 
-        position:
-          'absolute',
+        position: 'absolute',
 
-        borderRadius:
-          '50%',
+        borderRadius: '50%',
 
         background: `
           conic-gradient(
             from 0deg,
-
             #60a5fa,
             #8b5cf6,
             #ec4899,
@@ -977,9 +899,6 @@ function ensureProfileAura() {
   }
 
 
-  /*
-   * 사진보다 후광을 조금 크게
-   */
   const extra = 9;
 
 
@@ -1011,9 +930,6 @@ function ensureProfileAura() {
     }px`;
 
 
-  /*
-   * ON/OFF 상태 유지
-   */
   aura.classList.toggle(
     'aura-off',
     !profileAuraEnabled
@@ -1035,8 +951,7 @@ ensureProfileAura();
 
 
 /*
- * 사이트가 프로필 DOM을 다시 그려도
- * 사진 + 오로라 복구
+ * 프로필 DOM 재생성 대응
  */
 setInterval(
   ensureProfileAura,
@@ -1066,7 +981,7 @@ document.addEventListener(
 
 
 /* =========================
-   내부 사진 움직임
+   내부 사진 시선 추적
    ========================= */
 
 function animateProfileFace() {
@@ -1084,10 +999,6 @@ function animateProfileFace() {
     } = data;
 
 
-    /*
-     * 여기서 rect는
-     * 고정된 원의 위치
-     */
     const rect =
       profileImg.getBoundingClientRect();
 
@@ -1112,9 +1023,6 @@ function animateProfileFace() {
       centerY;
 
 
-    /*
-     * 커서가 실제 프사 원 위에 있는지
-     */
     const hovering =
       profileCursorX >= rect.left &&
       profileCursorX <= rect.right &&
@@ -1134,9 +1042,8 @@ function animateProfileFace() {
     if (hovering) {
 
       /* =========================
-         프사 위
-
-         내부 사진이 강하게 움직임
+         프사 위에 있을 때
+         강하게 반응
          ========================= */
 
       const nx =
@@ -1162,21 +1069,16 @@ function animateProfileFace() {
 
 
       /*
-       * 사진 자체가 원 내부에서
-       * 커서 쪽으로 이동
+       * 이동량은 적게
+       * 기울기는 크게
        */
       targetX =
-        nx * 12;
+        nx * 7;
 
       targetY =
-        ny * 9;
+        ny * 5;
 
 
-      /*
-       * 사진만 3D로 기울어짐
-       *
-       * 원은 전혀 안 움직임
-       */
       targetRY =
         nx * 15;
 
@@ -1185,34 +1087,27 @@ function animateProfileFace() {
 
 
       /*
-       * 마우스가 올라오면
-       * 내부 사진만 조금 확대
+       * 확대 거의 없음
        */
       targetScale =
-        1.16;
+        1.035;
 
 
-      /*
-       * 빛도 마우스 방향을 따라감
-       */
       light.style.setProperty(
         '--profile-light-x',
-        `${50 + nx * 30}%`
+        `${50 + nx * 28}%`
       );
 
 
       light.style.setProperty(
         '--profile-light-y',
-        `${50 + ny * 30}%`
+        `${50 + ny * 28}%`
       );
 
     } else {
 
       /* =========================
-         화면 어디에 있든
-
-         내부 인물이 은은하게
-         커서를 따라봄
+         화면 전체에서 은은하게 추적
          ========================= */
 
       const nx =
@@ -1237,19 +1132,13 @@ function animateProfileFace() {
         );
 
 
-      /*
-       * 평상시 사진 이동
-       */
       targetX =
-        nx * 4.5;
+        nx * 3;
 
       targetY =
-        ny * 3.5;
+        ny * 2;
 
 
-      /*
-       * 평상시 기울기
-       */
       targetRY =
         nx * 5;
 
@@ -1258,28 +1147,25 @@ function animateProfileFace() {
 
 
       targetScale =
-        1.12;
+        1.015;
 
 
-      /*
-       * 빛도 은은하게 따라감
-       */
       light.style.setProperty(
         '--profile-light-x',
-        `${50 + nx * 15}%`
+        `${50 + nx * 14}%`
       );
 
 
       light.style.setProperty(
         '--profile-light-y',
-        `${50 + ny * 15}%`
+        `${50 + ny * 14}%`
       );
 
     }
 
 
     /* =========================
-       부드럽게 따라가기
+       부드럽게 움직임
        ========================= */
 
     const smooth =
@@ -1323,15 +1209,10 @@ function animateProfileFace() {
       ) * smooth;
 
 
-    /* =========================
-       실제 변형
-
-       ★ profileImg가 아니라
-         inner에 transform 적용
-
-       따라서 동그란 틀은 안 움직임
-       ========================= */
-
+    /*
+     * 바깥 원은 고정
+     * 안쪽 사진만 움직임
+     */
     inner.style.transform = `
 
       translate(
@@ -1356,22 +1237,18 @@ function animateProfileFace() {
     `;
 
 
-    /*
-     * 프사 위에 있을 때는
-     * 사진만 약간 더 선명하게
-     */
     inner.style.filter =
       hovering
 
         ? `
-          brightness(1.055)
-          contrast(1.025)
-          saturate(1.035)
+          brightness(1.035)
+          contrast(1.02)
+          saturate(1.02)
         `
 
         : `
-          brightness(1.015)
-          contrast(1.015)
+          brightness(1.01)
+          contrast(1.01)
         `;
 
   }
@@ -1387,7 +1264,7 @@ animateProfileFace();
 
 
 /* =========================
-   프사 클릭 → 오로라 ON/OFF
+   프사 클릭 → 오로라 ON / OFF
    ========================= */
 
 document.addEventListener(
@@ -1405,16 +1282,10 @@ document.addEventListener(
     }
 
 
-    /*
-     * 부모 프로필 링크 이동 방지
-     */
     e.preventDefault();
     e.stopPropagation();
 
 
-    /*
-     * 오로라 상태 반전
-     */
     profileAuraEnabled =
       !profileAuraEnabled;
 
@@ -1450,7 +1321,8 @@ window.addEventListener(
 
   }
 );
-function disableProfileCardLink() {
+  
+  function disableProfileCardLink() {
 
   const link = document.querySelector(
     '.main-profile > a[href="/st/my/profile/modify"], ' +
