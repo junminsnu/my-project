@@ -89,38 +89,96 @@
      3. 현재 시간에 맞는 문구 표시
      ========================= */
 
-  function updateMyWord() {
-    const el = document.querySelector('[data-name="my_word"]');
-    if (!el) return;
+/* =========================
+   3. 응원 문구 좀비 복구 시스템
+   ========================= */
 
-    const hour = new Date().getHours();
+function getCurrentMessage() {
+  const hour = new Date().getHours();
 
-    const item = messages.find(
-      x => hour >= x.start && hour < x.end
-    );
+  return messages.find(
+    x => hour >= x.start && hour < x.end
+  );
+}
 
-    if (!item) return;
 
-    // text만 표시됨
-    el.textContent = item.text;
+function injectMyWord() {
 
-    Object.assign(el.style, {
-      fontSize: '14px',
-      fontWeight: '700',
-      lineHeight: '1.5',
-      color: '#444',
-      textAlign: 'center',
-      padding: '10px 6px',
-      borderRadius: '10px',
-      background: '#f7f8ff'
-    });
+  const item = getCurrentMessage();
+  if (!item) return;
+
+  let el = document.querySelector('[data-name="my_word"]');
+
+
+  /* =========================
+     my_word 자체가 사라졌으면 다시 생성
+     ========================= */
+
+  if (!el) {
+
+    const profileImg =
+      document.querySelector('[data-name="profileImg"]');
+
+    const cardContent =
+      document.querySelector(
+        '.main-profile .card-content'
+      );
+
+    if (!cardContent) return;
+
+
+    el = document.createElement('p');
+
+    el.setAttribute('data-name', 'my_word');
+    el.className = 'caption dotdotdot';
+
+
+    // 가능하면 프로필 사진 바로 앞에 삽입
+    if (profileImg && profileImg.parentElement === cardContent) {
+      cardContent.insertBefore(el, profileImg);
+    } else {
+      cardContent.prepend(el);
+    }
   }
 
-  updateMyWord();
 
-  // 1분마다 현재 시간 확인
-  setInterval(updateMyWord, 60000);
-/* =========================
+  /* =========================
+     문구가 지워졌거나 바뀌었으면 복구
+     ========================= */
+
+  if (el.textContent !== item.text) {
+    el.textContent = item.text;
+  }
+
+
+  /* =========================
+     스타일도 다시 복구
+     ========================= */
+
+  Object.assign(el.style, {
+    overflowWrap: 'break-word',
+    fontSize: '14px',
+    fontWeight: '700',
+    lineHeight: '1.5',
+    color: '#444',
+    textAlign: 'center',
+    padding: '10px 6px',
+    borderRadius: '10px',
+    background: '#f7f8ff'
+  });
+}
+
+
+// 처음 실행
+injectMyWord();
+
+
+// 0.5초마다 감시
+setInterval(injectMyWord, 500);
+
+
+// 창 크기 변경 시에도 즉시 복구
+window.addEventListener('resize', injectMyWord);/* =========================
    4. 계속 돌아다니는 생쥐 🐭
    ========================= */
 
