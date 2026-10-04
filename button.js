@@ -423,4 +423,56 @@ window.addEventListener('resize', () => {
     )
   );
 });
+  /* =========================
+   5. 프로필 사진 후광 효과
+   ========================= */
+
+const profileImg = document.querySelector('[data-name="profileImg"]');
+
+if (profileImg) {
+
+  // 애니메이션 CSS 생성
+  const glowStyle = document.createElement('style');
+
+  glowStyle.textContent = `
+    @keyframes profileGlow {
+      0% {
+        box-shadow:
+          0 0 0 3px rgba(99, 102, 241, .18),
+          0 0 10px rgba(59, 130, 246, .35),
+          0 0 20px rgba(124, 58, 237, .25);
+      }
+
+      35% {
+        box-shadow:
+          0 0 0 5px rgba(124, 58, 237, .22),
+          0 0 18px rgba(124, 58, 237, .55),
+          0 0 32px rgba(236, 72, 153, .30);
+      }
+
+      70% {
+        box-shadow:
+          0 0 0 4px rgba(236, 72, 153, .20),
+          0 0 16px rgba(236, 72, 153, .45),
+          0 0 30px rgba(59, 130, 246, .30);
+      }
+
+      100% {
+        box-shadow:
+          0 0 0 3px rgba(99, 102, 241, .18),
+          0 0 10px rgba(59, 130, 246, .35),
+          0 0 20px rgba(124, 58, 237, .25);
+      }
+    }
+
+    [data-name="profileImg"] {
+      border-radius: 50% !important;
+      animation: profileGlow 3s ease-in-out infinite;
+      position: relative;
+      z-index: 2;
+    }
+  `;
+
+  document.head.appendChild(glowStyle);
+}
 })();
