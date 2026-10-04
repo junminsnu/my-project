@@ -7,12 +7,13 @@
      1. 프로필 위 바로가기 버튼
      ========================= */
 
-  const links = [
-    ['📝 일실기', '/st/clinical-training/day-practice'],
-    ['📅 주실기', '/st/clinical-training/week-plan'],
-    ['✨ 최종성찰', '/st/clinical-training/final-ref'],
-    ['👤 내정보', '/st/my/profile']
-  ];
+const links = [
+  ['📝 일실기', '/st/clinical-training/day-practice'],
+  ['📅 주실기', '/st/clinical-training/week-plan'],
+  ['✨ 최종성찰', '/st/clinical-training/final-ref'],
+  ['🏥 외래예진기록', '/st/clinical-training/outpatient/field-final'],
+  ['👀 외래참관', '/st/clinical-training/outpatient/observation']
+];
 
   const box = document.createElement('div');
   box.id = 'profile-shortcuts';
