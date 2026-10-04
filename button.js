@@ -980,4 +980,60 @@ window.addEventListener(
 
   }
 );
+  function disableProfileCardLink() {
+
+  const link = document.querySelector(
+    '.main-profile > a[href="/st/my/profile/modify"], ' +
+    '.main-profile a[href="/st/my/profile/modify"]'
+  );
+
+  if (!link) return;
+
+  // 원래 주소는 필요하면 보관
+  if (!link.dataset.originalHref) {
+    link.dataset.originalHref =
+      link.getAttribute('href') || '';
+  }
+
+  // 실제 링크 기능 제거
+  link.removeAttribute('href');
+
+  // 링크처럼 보이는 마우스 커서 제거
+  link.style.cursor = 'default';
+}
+
+
+// 최초 실행
+disableProfileCardLink();
+
+
+// 사이트가 프로필 영역을 다시 그릴 수도 있으므로 계속 복구
+setInterval(
+  disableProfileCardLink,
+  500
+);
+
+
+// 혹시 href가 다시 붙는 순간에도 클릭 방지
+document.addEventListener(
+  'click',
+  e => {
+
+    const profileCard =
+      e.target.closest('.main-profile');
+
+    if (!profileCard) return;
+
+    const modifyLink =
+      e.target.closest(
+        'a[href="/st/my/profile/modify"]'
+      );
+
+    if (modifyLink) {
+      e.preventDefault();
+    }
+
+  },
+  true
+);
 })();
